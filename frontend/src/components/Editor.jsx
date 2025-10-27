@@ -1,3 +1,7 @@
+// === FRONTEND FILE ===
+// SAFE TO EDIT
+// Purpose: Monaco Editor integration component with Python language support.
+
 import React, { useEffect, useRef } from 'react'
 import * as monaco from 'monaco-editor'
 

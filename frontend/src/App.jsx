@@ -1,3 +1,7 @@
+// === FRONTEND FILE ===
+// SAFE TO EDIT
+// Purpose: main application layout component with file list and editor integration.
+
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import Editor from './components/Editor'
