@@ -1,3 +1,7 @@
+# === CORE FILE ===
+# DO NOT MODIFY
+# Purpose: initialize the FastAPI app, configure CORS, and define core file/git endpoints.
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
