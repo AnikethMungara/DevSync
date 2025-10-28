@@ -1,2 +1,10 @@
+# Core dependencies
 fastapi
 uvicorn[standard]
+
+# TODO: Add authentication dependencies
+# Required packages:
+# - sqlalchemy: Database ORM
+# - pyjwt: JWT token handling
+# - passlib[bcrypt]: Password hashing
+# - python-multipart: Form data parsing
