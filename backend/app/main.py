@@ -8,6 +8,20 @@ from pydantic import BaseModel
 from .git_utils import ensure_repo, commit_all, latest_diff
 import os
 
+"""
+TODO: Authentication Integration
+1. Import and set up authentication components:
+   - Import auth router
+   - Import database models and engine
+   - Initialize database tables
+   - Include auth router in app
+
+2. Requirements:
+   - User authentication with JWT
+   - Protected endpoints for user data
+   - Database integration for user storage
+"""
+
 app = FastAPI(title="DevSync Backend")
 
 app.add_middleware(
