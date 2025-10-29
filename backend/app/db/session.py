@@ -1,22 +1,31 @@
 """
-TODO: Implement database session management
-
-Required features:
-1. Database configuration:
-   - Set up SQLAlchemy engine
-   - Configure connection URL
-   - Create session factory
-
-2. Session management:
-   - Create FastAPI dependency for DB sessions
-   - Implement proper session cleanup
-   - Handle connection pooling
-
-3. Implementation steps:
-   - Define database URL (use SQLite for development)
-   - Create engine with appropriate settings
-   - Set up sessionmaker
-   - Create get_db dependency function
+SQLAlchemy engine, session factory, and FastAPI dependency.
 """
 
-# TODO: Add SQLAlchemy setup code here
+from __future__ import annotations
+
+from typing import Generator
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+
+from ..core.config import settings
+
+
+DATABASE_URL = settings.DATABASE_URL
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
+    pool_pre_ping=True,
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

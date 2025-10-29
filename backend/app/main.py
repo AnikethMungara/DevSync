@@ -22,6 +22,10 @@ TODO: Authentication Integration
    - Database integration for user storage
 """
 
+from .db.models import Base
+from .db.session import engine
+from .routes.auth import router as auth_router
+
 app = FastAPI(title="DevSync Backend")
 
 app.add_middleware(
@@ -36,6 +40,9 @@ WORKDIR = os.path.abspath(os.environ.get("DEVSYNC_WORKDIR", "./workspace"))
 FILES_DIR = os.path.join(WORKDIR, "files")
 os.makedirs(FILES_DIR, exist_ok=True)
 ensure_repo(WORKDIR)
+
+# Initialize database tables
+Base.metadata.create_all(bind=engine)
 
 class FileWrite(BaseModel):
     path: str
@@ -74,3 +81,6 @@ def git_commit(message: str = "save"):
 @app.get("/git/diff")
 def git_diff():
     return {"diff": latest_diff(WORKDIR)}
+
+# Include authentication routes
+app.include_router(auth_router)
