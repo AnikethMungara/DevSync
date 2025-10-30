@@ -11,7 +11,9 @@ import searchRouter from './routes/search.js';
 import terminalRouter from './routes/terminal.js';
 import aiRouter from './routes/ai.js';
 import executionRouter from './routes/execution.js';
+import authRouter from './routes/auth.js';
 import { initWebSocket } from './ws/index.js';
+import db from './services/databaseService.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -41,19 +43,12 @@ if (!fs.existsSync(config.workspaceDir)) {
   fs.mkdirSync(config.workspaceDir, { recursive: true });
 }
 
-// In-memory database mock for now (replace with actual DB later)
-const db = {
-  prepare: (sql) => ({
-    run: (...args) => {},
-    get: (...args) => null,
-    all: (...args) => []
-  }),
-  exec: (sql) => {},
-  close: () => {}
-};
-
+// Real SQLite database is now initialized in databaseService.js
 app.locals.db = db;
 
+logger.info('SQLite database initialized successfully');
+
+app.use('/api/auth', authRouter);
 app.use('/api/files', filesRouter);
 app.use('/api/projects', projectsRouter);
 app.use('/api/search', searchRouter);
