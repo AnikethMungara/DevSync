@@ -108,6 +108,8 @@ export function initWebSocket(server, db) {
   });
 
   logger.info('WebSocket server initialized on /ws');
+
+  return wss;
 }
 
 function handleMessage(ws, message, channel) {
