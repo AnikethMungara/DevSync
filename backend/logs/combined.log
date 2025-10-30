@@ -1,3 +1,7 @@
 {"level":"info","message":"WebSocket server initialized on /ws","service":"devsync-backend","timestamp":"2025-10-29 18:16:30"}
 {"level":"info","message":"DevSync backend listening on http://localhost:8787","service":"devsync-backend","timestamp":"2025-10-29 18:16:30"}
 {"level":"info","message":"WebSocket server available at ws://localhost:8787/ws","service":"devsync-backend","timestamp":"2025-10-29 18:16:30"}
+{"ip":"::1","level":"info","message":"GET /health","service":"devsync-backend","timestamp":"2025-10-29 18:22:20"}
+{"ip":"::1","level":"info","message":"GET /api/projects","service":"devsync-backend","timestamp":"2025-10-29 18:22:30"}
+{"ip":"::1","level":"info","message":"GET /api/projects","service":"devsync-backend","timestamp":"2025-10-29 18:22:42"}
+{"ip":"::1","level":"info","message":"GET /api/projects/demo/tree","service":"devsync-backend","timestamp":"2025-10-29 18:22:47"}

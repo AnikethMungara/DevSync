@@ -81,6 +81,17 @@ const useToastStore = create((set) => ({
   },
 }))
 
+// Execution store
+const useExecutionStore = create((set) => ({
+  isRunning: false,
+  output: null,
+  showOutput: false,
+  setRunning: (isRunning) => set({ isRunning }),
+  setOutput: (output) => set({ output, showOutput: true }),
+  clearOutput: () => set({ output: null, showOutput: false }),
+  toggleOutput: () => set((state) => ({ showOutput: !state.showOutput })),
+}))
+
 export default function Editor({ projectId }) {
   const queryClient = useQueryClient()
   const addToast = useToastStore((state) => state.addToast)
@@ -92,6 +103,14 @@ export default function Editor({ projectId }) {
   const setActiveTab = useEditorStore((state) => state.setActiveTab)
   const updateBuffer = useEditorStore((state) => state.updateBuffer)
   const markDirty = useEditorStore((state) => state.markDirty)
+
+  const isRunning = useExecutionStore((state) => state.isRunning)
+  const output = useExecutionStore((state) => state.output)
+  const showOutput = useExecutionStore((state) => state.showOutput)
+  const setRunning = useExecutionStore((state) => state.setRunning)
+  const setOutput = useExecutionStore((state) => state.setOutput)
+  const clearOutput = useExecutionStore((state) => state.clearOutput)
+  const toggleOutput = useExecutionStore((state) => state.toggleOutput)
 
   const editorRef = useRef(null)
   const monacoRef = useRef(null)
@@ -155,6 +174,11 @@ export default function Editor({ projectId }) {
       if (activeTabId) {
         handleSave(activeTabId)
       }
+    })
+
+    // Run on Ctrl/Cmd+Enter
+    editor.addCommand(monacoRef.current.KeyMod.CtrlCmd | monacoRef.current.KeyCode.Enter, () => {
+      handleRunCode()
     })
 
     // Track changes for dirty state
@@ -298,6 +322,61 @@ export default function Editor({ projectId }) {
     closeTab(path)
   }
 
+  // Execute code mutation
+  const executeMutation = useMutation({
+    mutationFn: async ({ filePath, code, language }) => {
+      const res = await fetch(`${API_URL}/api/execution/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filePath, code, language }),
+      })
+      if (!res.ok) throw new Error("Failed to execute code")
+      return res.json()
+    },
+    onMutate: () => {
+      setRunning(true)
+      clearOutput()
+    },
+    onSuccess: (data) => {
+      setRunning(false)
+      setOutput(data.result)
+      if (data.result.success) {
+        addToast("Code executed successfully", "success")
+      } else {
+        addToast("Execution completed with errors", "error")
+      }
+    },
+    onError: (error) => {
+      setRunning(false)
+      addToast(`Execution failed: ${error.message}`, "error")
+    },
+  })
+
+  const handleRunCode = () => {
+    if (!activeTabId || !editorInstanceRef.current) {
+      addToast("No file open to execute", "error")
+      return
+    }
+
+    const language = getLanguageFromPath(activeTabId)
+
+    // Map Monaco language to execution service language
+    const execLanguage = language === "javascript" ? "javascript" : language === "python" ? "python" : null
+
+    if (!execLanguage) {
+      addToast(`Unsupported language for execution: ${language}`, "error")
+      return
+    }
+
+    const code = editorInstanceRef.current.getValue()
+
+    executeMutation.mutate({
+      filePath: activeTabId,
+      code,
+      language: execLanguage,
+    })
+  }
+
   return (
     <div className="editor-container">
       <div className="editor-tabs">
@@ -314,10 +393,70 @@ export default function Editor({ projectId }) {
             </button>
           </div>
         ))}
+        {activeTabId && (
+          <div className="editor-actions">
+            <button
+              className="editor-run-btn"
+              onClick={handleRunCode}
+              disabled={isRunning}
+              title="Run code (Ctrl+Enter)"
+            >
+              {isRunning ? "Running..." : "▶ Run"}
+            </button>
+            {output && (
+              <button
+                className="editor-output-toggle"
+                onClick={toggleOutput}
+                title={showOutput ? "Hide output" : "Show output"}
+              >
+                {showOutput ? "Hide Output" : "Show Output"}
+              </button>
+            )}
+          </div>
+        )}
       </div>
-      <div className="editor-content">
+      <div className="editor-content" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
         {activeTabId ? (
-          <div ref={editorRef} style={{ height: "100%", width: "100%" }} />
+          <>
+            <div
+              ref={editorRef}
+              style={{
+                height: showOutput ? "60%" : "100%",
+                width: "100%",
+                transition: "height 0.2s ease",
+              }}
+            />
+            {showOutput && output && (
+              <div className="editor-output" style={{ height: "40%", overflowY: "auto" }}>
+                <div className="editor-output-header">
+                  <span>Output</span>
+                  <button onClick={clearOutput} title="Clear output">
+                    ✕
+                  </button>
+                </div>
+                <div className="editor-output-content">
+                  {output.stdout && (
+                    <div className="editor-output-section">
+                      <div className="editor-output-label">Standard Output:</div>
+                      <pre className="editor-output-text editor-output-text--stdout">{output.stdout}</pre>
+                    </div>
+                  )}
+                  {output.stderr && (
+                    <div className="editor-output-section">
+                      <div className="editor-output-label">Standard Error:</div>
+                      <pre className="editor-output-text editor-output-text--stderr">{output.stderr}</pre>
+                    </div>
+                  )}
+                  <div className="editor-output-section">
+                    <div className="editor-output-label">Exit Code: {output.exitCode}</div>
+                    <div className="editor-output-label">
+                      Status: {output.success ? "✓ Success" : "✗ Failed"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="editor-empty">Open a file to start editing</div>
         )}

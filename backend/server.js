@@ -10,6 +10,7 @@ import projectsRouter from './routes/projects.js';
 import searchRouter from './routes/search.js';
 import terminalRouter from './routes/terminal.js';
 import aiRouter from './routes/ai.js';
+import executionRouter from './routes/execution.js';
 import { initWebSocket } from './ws/index.js';
 import fs from 'fs';
 import path from 'path';
@@ -58,6 +59,7 @@ app.use('/api/projects', projectsRouter);
 app.use('/api/search', searchRouter);
 app.use('/api/terminal', terminalRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/execution', executionRouter);
 
 app.use('/extensions', express.static(path.join(__dirname, 'extensions')));
 
@@ -80,7 +82,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-initWebSocket(server, db);
+const wss = initWebSocket(server, db);
+app.locals.wss = wss;
 
 server.listen(config.port, () => {
   logger.info(`DevSync backend listening on http://localhost:${config.port}`);
