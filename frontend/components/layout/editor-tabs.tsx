@@ -1,6 +1,6 @@
 "use client"
 
-import { X, SplitSquareVertical } from "lucide-react"
+import { X, SplitSquareVertical, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { EditorTab } from "@/lib/types"
 
@@ -10,10 +10,14 @@ interface EditorTabsProps {
   onTabSelect: (id: string) => void
   onTabClose: (id: string) => void
   onSplitEditor?: () => void
+  onSave?: () => void
 }
 
-export function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onSplitEditor }: EditorTabsProps) {
+export function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onSplitEditor, onSave }: EditorTabsProps) {
   if (tabs.length === 0) return null
+
+  const activeTab = tabs.find((t) => t.id === activeTabId)
+  const hasDirtyTab = activeTab?.isDirty
 
   return (
     <div className="h-10 bg-panel border-b border-panel-border flex items-center">
@@ -29,7 +33,7 @@ export function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onSplit
             }`}
           >
             <span className="truncate max-w-[150px]">{tab.name}</span>
-            {tab.isDirty && <span className="w-1.5 h-1.5 rounded-full bg-accent-blue flex-shrink-0" />}
+            {tab.isDirty && <span className="w-1.5 h-1.5 rounded-full bg-accent-blue flex-shrink-0" title="Unsaved changes" />}
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -42,12 +46,29 @@ export function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onSplit
           </button>
         ))}
       </div>
-      <div className="px-2 border-l border-panel-border">
+      <div className="px-2 border-l border-panel-border flex items-center gap-1">
+        {onSave && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-7 w-7 transition-colors ${
+              hasDirtyTab
+                ? "text-accent-blue hover:text-accent-blue"
+                : "text-text-muted hover:text-text-secondary"
+            }`}
+            onClick={onSave}
+            title="Save (Ctrl+S)"
+            disabled={!hasDirtyTab}
+          >
+            <Save className="w-4 h-4" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
           className="h-7 w-7 text-text-secondary hover:text-text-primary"
           onClick={onSplitEditor}
+          title="Split Editor"
         >
           <SplitSquareVertical className="w-4 h-4" />
         </Button>

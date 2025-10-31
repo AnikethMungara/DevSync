@@ -2,6 +2,17 @@ import * as fileService from '../services/fileService.js';
 import { validateFilePath } from '../utils/validators.js';
 import logger from '../utils/logger.js';
 
+export async function getFileTree(req, res) {
+  try {
+    const { path = '' } = req.query;
+    const tree = await fileService.getFileTree(path);
+    res.json(tree);
+  } catch (err) {
+    logger.error('Get file tree error', { error: err.message, path: req.query.path });
+    res.status(500).json({ error: err.message });
+  }
+}
+
 export async function readFile(req, res) {
   try {
     const { path } = req.query;
@@ -50,6 +61,20 @@ export async function deleteFile(req, res) {
     res.json({ success: true, path });
   } catch (err) {
     logger.error('Delete file error', { error: err.message, path: req.query.path });
+    res.status(400).json({ error: err.message });
+  }
+}
+
+export async function renameFile(req, res) {
+  try {
+    const { oldPath, newPath } = req.body;
+    validateFilePath(oldPath);
+    validateFilePath(newPath);
+
+    await fileService.renameFile(oldPath, newPath);
+    res.json({ success: true, oldPath, newPath });
+  } catch (err) {
+    logger.error('Rename file error', { error: err.message, oldPath: req.body.oldPath, newPath: req.body.newPath });
     res.status(400).json({ error: err.message });
   }
 }

@@ -1,0 +1,17 @@
+{
+  "name": "sample-project",
+  "version": "1.0.0",
+  "description": "Sample project for DevSync IDE",
+  "main": "src/index.tsx",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

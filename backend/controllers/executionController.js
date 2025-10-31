@@ -1,7 +1,12 @@
 import { executeCode } from '../services/executionService.js';
 import path from 'path';
-import { WORKSPACE_DIR } from '../config.js';
+import config from '../config/config.js';
 import logger from '../utils/logger.js';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const WORKSPACE_DIR = path.resolve(__dirname, '..', config.workspaceDir);
 
 /**
  * Execute code from a file

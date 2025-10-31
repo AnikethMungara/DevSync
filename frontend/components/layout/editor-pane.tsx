@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import type { EditorTab } from "@/lib/types"
 
 interface EditorPaneProps {
@@ -8,6 +9,15 @@ interface EditorPaneProps {
 }
 
 export function EditorPane({ tab, onContentChange }: EditorPaneProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (textareaRef.current && tab) {
+      // Set cursor position to end when tab changes
+      textareaRef.current.setSelectionRange(tab.content.length, tab.content.length)
+    }
+  }, [tab?.id])
+
   if (!tab) {
     return (
       <div className="h-full flex items-center justify-center bg-canvas">
@@ -26,39 +36,26 @@ export function EditorPane({ tab, onContentChange }: EditorPaneProps) {
     )
   }
 
-  // Syntax highlighting helper
-  const highlightSyntax = (code: string, language: string) => {
-    if (language !== "typescript") return code
-
-    return code
-      .split("\n")
-      .map((line, i) => {
-        let highlighted = line
-        // Keywords
-        highlighted = highlighted.replace(
-          /\b(import|export|from|function|const|let|var|return|if|else|class|interface|type|async|await)\b/g,
-          '<span style="color: var(--token-keyword)">$1</span>',
-        )
-        // Strings
-        highlighted = highlighted.replace(/(['"`])(.*?)\1/g, '<span style="color: var(--token-string)">$1$2$1</span>')
-        // Comments
-        highlighted = highlighted.replace(/(\/\/.*$)/g, '<span style="color: var(--token-comment)">$1</span>')
-        // Functions
-        highlighted = highlighted.replace(
-          /\b([a-zA-Z_]\w*)\s*\(/g,
-          '<span style="color: var(--token-function)">$1</span>(',
-        )
-
-        return `<div class="leading-6"><span class="inline-block w-12 text-right pr-4 select-none" style="color: var(--text-muted)">${i + 1}</span><span>${highlighted}</span></div>`
-      })
-      .join("")
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value
+    onContentChange?.(newContent)
   }
 
   return (
-    <div className="h-full bg-canvas overflow-auto">
-      <div
-        className="p-4 text-sm font-mono text-text-primary"
-        dangerouslySetInnerHTML={{ __html: highlightSyntax(tab.content, tab.language) }}
+    <div className="h-full bg-canvas overflow-hidden flex flex-col">
+      <textarea
+        ref={textareaRef}
+        value={tab.content}
+        onChange={handleContentChange}
+        className="flex-1 w-full p-4 text-sm font-mono text-text-primary bg-canvas border-none outline-none resize-none"
+        style={{
+          tabSize: 2,
+          lineHeight: "1.6",
+        }}
+        spellCheck={false}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
       />
     </div>
   )

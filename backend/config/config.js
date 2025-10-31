@@ -3,7 +3,7 @@ dotenv.config();
 
 const config = {
   port: process.env.PORT || 8787,
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   aiApiKey: process.env.AI_API_KEY || '',
   workspaceDir: process.env.WORKSPACE_DIR || './workspace',
   databasePath: process.env.DATABASE_PATH || './database.db',
