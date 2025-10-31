@@ -1,41 +1,18 @@
 import type { Problem } from "@/lib/types"
 
-const mockProblems: Problem[] = [
-  {
-    id: "prob-1",
-    path: "/src/components/App.tsx",
-    line: 12,
-    col: 5,
-    severity: "error",
-    message: "Property 'user' does not exist on type 'AppProps'",
-  },
-  {
-    id: "prob-2",
-    path: "/src/lib/utils.ts",
-    line: 8,
-    col: 15,
-    severity: "warn",
-    message: "Unused variable 'result'",
-  },
-  {
-    id: "prob-3",
-    path: "/src/components/Header.tsx",
-    line: 5,
-    col: 1,
-    severity: "info",
-    message: "Consider adding a key prop to this element",
-  },
-  {
-    id: "prob-4",
-    path: "/src/lib/api.ts",
-    line: 23,
-    col: 10,
-    severity: "error",
-    message: "Cannot find module 'axios'",
-  },
-]
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8787"
 
 export async function getProblems(): Promise<Problem[]> {
-  await new Promise((resolve) => setTimeout(resolve, 100))
-  return mockProblems
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/problems`)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch problems: ${response.statusText}`)
+    }
+    const problems = await response.json()
+    return problems
+  } catch (error) {
+    console.error("Error fetching problems:", error)
+    // Return empty array on error instead of throwing
+    return []
+  }
 }

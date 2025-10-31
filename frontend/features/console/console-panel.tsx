@@ -15,20 +15,7 @@ interface ConsoleMessage {
 }
 
 export function ConsolePanel() {
-  const [messages, setMessages] = useState<ConsoleMessage[]>([
-    {
-      id: "1",
-      type: "log",
-      content: "DevSync IDE initialized",
-      timestamp: new Date().toLocaleTimeString(),
-    },
-    {
-      id: "2",
-      type: "info",
-      content: "Workspace loaded: devsync-project",
-      timestamp: new Date().toLocaleTimeString(),
-    },
-  ])
+  const [messages, setMessages] = useState<ConsoleMessage[]>([])
   const [input, setInput] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {

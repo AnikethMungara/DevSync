@@ -1,13 +1,15 @@
 "use client"
 
-import { Command, Play, GitBranch, MessageSquare } from "lucide-react"
+import { Command, Play, GitBranch, MessageSquare, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface TopbarProps {
   onCommandPaletteOpen?: () => void
+  onRun?: () => void
+  isRunning?: boolean
 }
 
-export function Topbar({ onCommandPaletteOpen }: TopbarProps) {
+export function Topbar({ onCommandPaletteOpen, onRun, isRunning }: TopbarProps) {
   return (
     <div className="h-10 bg-panel border-b border-panel-border flex items-center px-4 gap-4">
       <div className="flex items-center gap-2">
@@ -31,8 +33,19 @@ export function Topbar({ onCommandPaletteOpen }: TopbarProps) {
 
         <div className="w-px h-4 bg-panel-border" />
 
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-text-secondary hover:text-text-primary">
-          <Play className="w-4 h-4" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-text-secondary hover:text-text-primary disabled:opacity-50"
+          onClick={onRun}
+          disabled={isRunning}
+          title="Run code (Ctrl+Enter)"
+        >
+          {isRunning ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Play className="w-4 h-4" />
+          )}
         </Button>
 
         <Button variant="ghost" size="icon" className="h-7 w-7 text-text-secondary hover:text-text-primary">

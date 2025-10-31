@@ -5,6 +5,7 @@ import { ChevronUp, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProblemsPanel } from "@/features/problems/problems-panel"
 import { ConsolePanel } from "@/features/console/console-panel"
+import { ExecutionPanel } from "@/features/execution/execution-panel"
 import { useUIStore } from "@/lib/state/ui-store"
 
 interface BottomPanelProps {
@@ -127,11 +128,7 @@ export function BottomPanel({ onNavigate }: BottomPanelProps) {
       <div className="flex-1 overflow-hidden">
         {activeBottomTab === "problems" && <ProblemsPanel onNavigate={onNavigate} />}
         {activeBottomTab === "console" && <ConsolePanel />}
-        {activeBottomTab === "output" && (
-          <div className="h-full flex items-center justify-center">
-            <p className="text-text-secondary text-sm">Output panel coming soon...</p>
-          </div>
-        )}
+        {activeBottomTab === "output" && <ExecutionPanel />}
         {activeBottomTab === "git" && (
           <div className="h-full flex items-center justify-center">
             <p className="text-text-secondary text-sm">Git panel coming soon...</p>

@@ -12,6 +12,7 @@ import terminalRouter from './routes/terminal.js';
 import aiRouter from './routes/ai.js';
 import executionRouter from './routes/execution.js';
 import authRouter from './routes/auth.js';
+import problemsRouter from './routes/problems.js';
 import { initWebSocket } from './ws/index.js';
 import db from './services/databaseService.js';
 import fs from 'fs';
@@ -55,6 +56,7 @@ app.use('/api/search', searchRouter);
 app.use('/api/terminal', terminalRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/execution', executionRouter);
+app.use('/api/problems', problemsRouter);
 
 app.use('/extensions', express.static(path.join(__dirname, 'extensions')));
 
@@ -100,3 +102,4 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled rejection', { reason });
 });
+ 

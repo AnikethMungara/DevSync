@@ -73,14 +73,13 @@ export function initDatabase() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS files (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      project_id INTEGER NOT NULL,
-      path TEXT NOT NULL,
+      project_id INTEGER,
+      path TEXT NOT NULL UNIQUE,
       content TEXT,
       size INTEGER DEFAULT 0,
       last_modified DATETIME DEFAULT CURRENT_TIMESTAMP,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-      UNIQUE(project_id, path)
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
     )
   `);
 
@@ -249,9 +248,9 @@ export const memberQueries = {
  */
 export const fileQueries = {
   upsert: db.prepare(`
-    INSERT INTO files (project_id, path, content, size)
+    INSERT INTO files (path, content, size, project_id)
     VALUES (?, ?, ?, ?)
-    ON CONFLICT(project_id, path)
+    ON CONFLICT(path)
     DO UPDATE SET
       content = excluded.content,
       size = excluded.size,
@@ -260,7 +259,7 @@ export const fileQueries = {
 
   findByPath: db.prepare(`
     SELECT * FROM files
-    WHERE project_id = ? AND path = ?
+    WHERE path = ?
   `),
 
   findByProject: db.prepare(`
@@ -269,13 +268,24 @@ export const fileQueries = {
     ORDER BY path ASC
   `),
 
+  findAll: db.prepare(`
+    SELECT * FROM files
+    ORDER BY path ASC
+  `),
+
   delete: db.prepare(`
     DELETE FROM files
-    WHERE project_id = ? AND path = ?
+    WHERE path = ?
   `),
 
   deleteByProject: db.prepare(`
     DELETE FROM files WHERE project_id = ?
+  `),
+
+  updatePath: db.prepare(`
+    UPDATE files
+    SET path = ?, last_modified = CURRENT_TIMESTAMP
+    WHERE path = ?
   `)
 };
 
