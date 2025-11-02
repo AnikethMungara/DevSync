@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+ENV/
+env/
+
+# Database
+*.db
+database.db
+data/
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env.local
+.env
+
+# Workspace (user content)
+workspace/*
+!workspace/.gitkeep
+!workspace/demo/
+!workspace/sample-project/
+
+# Temp files
+*.tmp
+test_*.json
+
+# Old Node.js backend files (now using Python/FastAPI)
+server.js
+config/
+controllers/
+routes/
+services/
+utils/
+ws/
+extensions/
+package.json
+package-lock.json

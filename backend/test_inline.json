@@ -1,4 +1,0 @@
-{
-  "code": "for i in range(5):\\n    print(f'Number: {i}')",
-  "language": "python"
-}
