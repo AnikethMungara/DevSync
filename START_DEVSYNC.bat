@@ -18,8 +18,8 @@ if not exist "backend\workspace\sample-project" (
 )
 
 REM Start backend in new window
-echo Starting backend server...
-start "DevSync Backend" cmd /k "cd backend && npm start"
+echo Starting Python FastAPI backend server...
+start "DevSync Backend" cmd /k "cd backend && python -m uvicorn main:app --host 0.0.0.0 --port 8787 --reload"
 
 REM Wait a bit for backend to start
 timeout /t 3 /nobreak >nul
@@ -33,7 +33,7 @@ echo ========================================
 echo DevSync is starting!
 echo ========================================
 echo Backend: http://localhost:8787
-echo Frontend: http://localhost:5173
+echo Frontend: http://localhost:3000
 echo.
 echo Press any key to close this window...
 pause >nul

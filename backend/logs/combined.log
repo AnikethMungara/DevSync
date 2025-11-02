@@ -399,3 +399,36 @@
 {"ip":"::1","level":"info","message":"GET /api/files","service":"devsync-backend","timestamp":"2025-10-31 14:25:43"}
 {"ip":"::1","level":"info","message":"GET /api/files","service":"devsync-backend","timestamp":"2025-10-31 14:25:45"}
 {"ip":"::1","level":"info","message":"GET /api/files","service":"devsync-backend","timestamp":"2025-10-31 14:25:49"}
+{"level":"info","message":"Initializing database schema...","service":"devsync-backend","timestamp":"2025-10-31 14:52:05"}
+{"level":"info","message":"Database schema initialized successfully","service":"devsync-backend","timestamp":"2025-10-31 14:52:05"}
+{"level":"warn","message":"JWT_SECRET not set in environment. Using random secret. This will invalidate tokens on restart!","service":"devsync-backend","timestamp":"2025-10-31 14:52:05"}
+{"level":"info","message":"SQLite database initialized successfully","service":"devsync-backend","timestamp":"2025-10-31 14:52:05"}
+{"level":"info","message":"WebSocket server initialized on /ws","service":"devsync-backend","timestamp":"2025-10-31 14:52:05"}
+{"level":"info","message":"DevSync backend listening on http://localhost:8787","service":"devsync-backend","timestamp":"2025-10-31 14:52:05"}
+{"level":"info","message":"WebSocket server available at ws://localhost:8787/ws","service":"devsync-backend","timestamp":"2025-10-31 14:52:05"}
+{"ip":"::1","level":"info","message":"GET /api/files/tree","service":"devsync-backend","timestamp":"2025-10-31 14:52:26"}
+{"ip":"::1","level":"info","message":"GET /api/problems","service":"devsync-backend","timestamp":"2025-10-31 14:52:26"}
+{"count":0,"level":"info","message":"Problems fetched","service":"devsync-backend","timestamp":"2025-10-31 14:52:26"}
+{"ip":"::1","level":"info","message":"GET /health","service":"devsync-backend","timestamp":"2025-10-31 14:52:27"}
+{"ip":"::1","level":"info","message":"GET /api/files/tree","service":"devsync-backend","timestamp":"2025-10-31 14:52:52"}
+{"ip":"::1","level":"info","message":"GET /api/problems","service":"devsync-backend","timestamp":"2025-10-31 14:52:52"}
+{"count":0,"level":"info","message":"Problems fetched","service":"devsync-backend","timestamp":"2025-10-31 14:52:52"}
+{"ip":"::1","level":"info","message":"POST /api/files","service":"devsync-backend","timestamp":"2025-10-31 14:52:59"}
+{"level":"info","message":"File created: main.py","service":"devsync-backend","timestamp":"2025-10-31 14:52:59"}
+{"ip":"::1","level":"info","message":"GET /api/files","service":"devsync-backend","timestamp":"2025-10-31 14:52:59"}
+{"ip":"::1","level":"info","message":"GET /api/files/tree","service":"devsync-backend","timestamp":"2025-10-31 14:52:59"}
+{"ip":"::1","level":"info","message":"POST /api/execution/run","service":"devsync-backend","timestamp":"2025-10-31 14:53:09"}
+{"level":"info","message":"Executing python code from: C:\\Projects\\DevSync\\backend\\workspace\\main.py","service":"devsync-backend","timestamp":"2025-10-31 14:53:09"}
+{"ip":"::1","level":"info","message":"PUT /api/files","service":"devsync-backend","timestamp":"2025-10-31 14:53:10"}
+{"level":"info","message":"File updated: main.py","service":"devsync-backend","timestamp":"2025-10-31 14:53:10"}
+{"ip":"::1","level":"info","message":"GET /api/files","service":"devsync-backend","timestamp":"2025-10-31 14:53:43"}
+{"ip":"::1","level":"info","message":"GET /api/files","service":"devsync-backend","timestamp":"2025-10-31 14:53:43"}
+{"ip":"::1","level":"info","message":"POST /api/execution/run","service":"devsync-backend","timestamp":"2025-10-31 14:53:52"}
+{"level":"info","message":"Executing python code from: C:\\Projects\\DevSync\\backend\\workspace\\main.py","service":"devsync-backend","timestamp":"2025-10-31 14:53:52"}
+{"ip":"::1","level":"info","message":"GET /api/files","service":"devsync-backend","timestamp":"2025-10-31 14:54:04"}
+{"ip":"::1","level":"info","message":"GET /api/files","service":"devsync-backend","timestamp":"2025-10-31 14:54:05"}
+{"ip":"::1","level":"info","message":"POST /api/execution/run","service":"devsync-backend","timestamp":"2025-10-31 14:54:07"}
+{"level":"info","message":"Executing python code from: C:\\Projects\\DevSync\\backend\\workspace\\temp_1761937365259.py","service":"devsync-backend","timestamp":"2025-10-31 14:54:07"}
+{"ip":"::1","level":"info","message":"GET /api/files","service":"devsync-backend","timestamp":"2025-10-31 14:54:12"}
+{"ip":"::1","level":"info","message":"POST /api/execution/run","service":"devsync-backend","timestamp":"2025-10-31 14:54:14"}
+{"level":"info","message":"Executing python code from: C:\\Projects\\DevSync\\backend\\workspace\\temp_1761937117888.py","service":"devsync-backend","timestamp":"2025-10-31 14:54:14"}

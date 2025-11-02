@@ -1,5 +1,76 @@
-node_modules
-.venv
-__pycache__
-.env
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output
+*.log
+
+# Production
+build/
+dist/
+.next/
+out/
+
+# Misc
+.DS_Store
+*.pem
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database
 *.db
+*.sqlite
+*.sqlite3
+database.db
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+tmp_backup/
+
+# Workspace files (user generated content)
+backend/workspace/*
+!backend/workspace/.gitkeep
+!backend/workspace/demo/
+!backend/workspace/sample-project/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+ENV/
+env/
+
+# Optional: FastAPI alternative implementation
+fastapi-runner/
+
+# OS files
+Thumbs.db
+.DS_Store
