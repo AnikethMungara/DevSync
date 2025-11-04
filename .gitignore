@@ -68,8 +68,12 @@ venv/
 ENV/
 env/
 
-# Optional: FastAPI alternative implementation
-fastapi-runner/
+# Old/unnecessary files
+CRUD_IMPLEMENTATION.md
+FRONTEND_BACKEND_INTEGRATION.md
+CLEAN_START.bat
+kill-dev-servers.ps1
+kill-dev-servers.sh
 
 # OS files
 Thumbs.db

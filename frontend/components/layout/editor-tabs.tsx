@@ -23,14 +23,14 @@ export function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onSplit
     <div className="h-10 bg-panel border-b border-panel-border flex items-center">
       <div className="flex-1 flex items-center overflow-x-auto">
         {tabs.map((tab) => (
-          <button
+          <div
             key={tab.id}
-            onClick={() => onTabSelect(tab.id)}
-            className={`group flex items-center gap-2 px-4 h-full border-r border-panel-border text-sm transition-colors flex-shrink-0 ${
+            className={`group flex items-center gap-2 px-4 h-full border-r border-panel-border text-sm transition-colors flex-shrink-0 cursor-pointer ${
               activeTabId === tab.id
                 ? "bg-canvas text-text-primary"
                 : "text-text-secondary hover:text-text-primary hover:bg-panel-border/50"
             }`}
+            onClick={() => onTabSelect(tab.id)}
           >
             <span className="truncate max-w-[150px]">{tab.name}</span>
             {tab.isDirty && <span className="w-1.5 h-1.5 rounded-full bg-accent-blue flex-shrink-0" title="Unsaved changes" />}
@@ -43,7 +43,7 @@ export function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onSplit
             >
               <X className="w-3.5 h-3.5" />
             </button>
-          </button>
+          </div>
         ))}
       </div>
       <div className="px-2 border-l border-panel-border flex items-center gap-1">

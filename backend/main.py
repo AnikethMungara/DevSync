@@ -8,12 +8,18 @@ from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import uvicorn
 import logging
+import asyncio
+import sys
 from pathlib import Path
 
 from app.config import settings
 from app.routers import files, execution, problems, projects
 from app.database import Database
 from app.utils.logger import setup_logger
+
+# Fix for Windows asyncio subprocess issue
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 # Setup logging
 logger = setup_logger(__name__)
@@ -112,5 +118,6 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=settings.PORT,
         reload=True,
-        log_level="info"
+        log_level="info",
+        loop="asyncio"  # Use asyncio loop (works with ProactorEventLoopPolicy on Windows)
     )
