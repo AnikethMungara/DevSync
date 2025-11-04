@@ -40,11 +40,17 @@ export default function WorkspacePage() {
         e.preventDefault()
         saveActiveTab()
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault()
+        if (!isExecuting) {
+          runActiveFile()
+        }
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [saveActiveTab])
+  }, [saveActiveTab, runActiveFile, isExecuting])
 
   const handleFileSelect = async (path: string) => {
     const content = await getFileContent(path)

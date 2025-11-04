@@ -7,21 +7,16 @@ export interface ExecutionResult {
     stdout: string
     stderr: string
     success: boolean
+    executionTime: number
   }
   error?: string
-}
-
-export interface Language {
-  id: string
-  name: string
-  extensions: string[]
-  runtime: string
 }
 
 export interface ExecutionRequest {
   filePath?: string
   code?: string
   language: string
+  input?: string
 }
 
 /**
@@ -38,33 +33,21 @@ export async function executeCode(request: ExecutionRequest): Promise<ExecutionR
     })
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: "Failed to execute code" }))
-      throw new Error(error.error || `Execution failed: ${response.statusText}`)
+      const error = await response.json().catch(() => ({ detail: "Failed to execute code" }))
+      return {
+        success: false,
+        error: error.detail || `Execution failed: ${response.statusText}`
+      }
     }
 
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
     console.error("Error executing code:", error)
-    throw error
-  }
-}
-
-/**
- * Get list of supported languages
- */
-export async function getSupportedLanguages(): Promise<Language[]> {
-  try {
-    const response = await fetch(`${BACKEND_URL}/api/execution/languages`)
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch languages: ${response.statusText}`)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
     }
-
-    const data = await response.json()
-    return data.languages || []
-  } catch (error) {
-    console.error("Error fetching supported languages:", error)
-    throw error
   }
 }
 
@@ -82,6 +65,17 @@ export function detectLanguageFromPath(filePath: string): string | null {
     'ts': 'javascript',
     'tsx': 'javascript',
     'py': 'python',
+    'java': 'java',
+    'cpp': 'cpp',
+    'cc': 'cpp',
+    'cxx': 'cpp',
+    'c': 'c',
+    'go': 'go',
+    'rs': 'rust',
+    'rb': 'ruby',
+    'php': 'php',
+    'sh': 'bash',
+    'bash': 'bash',
   }
 
   return languageMap[ext || ''] || null
