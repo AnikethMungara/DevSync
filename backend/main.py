@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 from app.config import settings
-from app.routers import files, execution, problems, projects, agent_proxy, git, search
+from app.routers import files, execution, problems, projects, agent_proxy, git, search, collaboration
 from app.database import Database
 from app.utils.logger import setup_logger
 
@@ -79,6 +79,7 @@ app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(agent_proxy.router, prefix="/api/agent", tags=["agent"])
 app.include_router(git.router, prefix="/api/git", tags=["git"])
 app.include_router(search.router, prefix="/api/search", tags=["search"])
+app.include_router(collaboration.router, prefix="/api/collaboration", tags=["collaboration"])
 
 # Health check
 @app.get("/health")

@@ -10,6 +10,7 @@ import { AgentSidebar } from "@/components/layout/agent-sidebar"
 import { GitSidebar } from "@/components/layout/git-sidebar"
 import { SearchSidebar } from "@/components/layout/search-sidebar"
 import { SettingsPanel } from "@/components/layout/settings-panel"
+import { CollaborationSidebar } from "@/components/layout/collaboration-sidebar"
 import { BottomPanel } from "@/components/layout/bottom-panel"
 import { CommandPalette } from "@/components/layout/command-palette"
 import { ResizablePanel } from "@/components/shared/resizable-panel"
@@ -88,13 +89,15 @@ export default function WorkspacePage() {
       {/* Activity Bar */}
       <ActivityBar activeView={activeView} onViewChange={setActiveView} />
 
-      {/* Left Panel - File Explorer, Git, Search, or Settings */}
+      {/* Left Panel - File Explorer, Git, Search, Collaboration, or Settings */}
       {explorerVisible && (
         <ResizablePanel side="left" defaultWidth={explorerWidth} onResize={setExplorerWidth}>
           {activeView === "source-control" ? (
             <GitSidebar />
           ) : activeView === "search" ? (
             <SearchSidebar />
+          ) : activeView === "collaboration" ? (
+            <CollaborationSidebar />
           ) : activeView === "settings" ? (
             <SettingsPanel />
           ) : (

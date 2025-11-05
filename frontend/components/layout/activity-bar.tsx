@@ -1,6 +1,6 @@
 "use client"
 
-import { Files, Search, GitBranch, Play, Settings, Layers } from "lucide-react"
+import { Files, Search, GitBranch, Play, Settings, Layers, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
@@ -14,6 +14,7 @@ export function ActivityBar({ activeView = "explorer", onViewChange }: ActivityB
     { id: "explorer", icon: Files, label: "Explorer", shortcut: "⌘⇧E" },
     { id: "search", icon: Search, label: "Search", shortcut: "⌘⇧F" },
     { id: "source-control", icon: GitBranch, label: "Source Control", shortcut: "⌘⇧G" },
+    { id: "collaboration", icon: Users, label: "Collaboration", shortcut: "⌘⇧C" },
     { id: "run", icon: Play, label: "Run and Debug", shortcut: "⌘⇧D" },
     { id: "devsync", icon: Layers, label: "DevSync", shortcut: "⌘⇧X" },
   ]
