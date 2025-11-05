@@ -2,7 +2,8 @@
 setlocal enabledelayedexpansion
 
 echo ========================================
-echo Starting DevSync Backend and Frontend
+echo Starting DevSync (File Explorer Only)
+echo AI Agent disabled until system reboot
 echo ========================================
 echo.
 
@@ -18,21 +19,20 @@ if not exist "backend\workspace" (
     mkdir backend\workspace
 )
 
-REM Start backend in a NEW visible window (using virtual environment)
-echo Starting Python FastAPI backend server (venv)...
-start "DevSync Backend [DO NOT CLOSE]" cmd /c "cd backend && venv\Scripts\python -m uvicorn main:app --host 0.0.0.0 --port 8787 --reload"
+REM Temporarily disable agent proxy in main.py
+echo Disabling AI agent proxy temporarily...
+powershell -Command "(Get-Content backend\main.py) -replace '^from app.routers import files, execution, problems, projects, agent_proxy', '# Agent disabled\nfrom app.routers import files, execution, problems, projects' | Set-Content backend\main.py.tmp"
+powershell -Command "(Get-Content backend\main.py.tmp) -replace '^app.include_router\(agent_proxy.router', '# app.include_router(agent_proxy.router' | Set-Content backend\main.py.tmp"
+move /Y backend\main.py.tmp backend\main.py >nul
+
+REM Start backend
+echo Starting Python FastAPI backend server...
+start "DevSync Backend [DO NOT CLOSE]" cmd /c "cd backend && python -m uvicorn main:app --host 0.0.0.0 --port 8787 --reload"
 
 REM Wait for backend to start
 timeout /t 3 /nobreak >nul
 
-REM Start AI Agent Service in a NEW visible window (using virtual environment)
-echo Starting AI Agent Service (venv)...
-start "DevSync AI Agent [DO NOT CLOSE]" cmd /c "cd agent-service && venv\Scripts\python main.py"
-
-REM Wait for agent service to start
-timeout /t 3 /nobreak >nul
-
-REM Start frontend in a NEW visible window (not background)
+REM Start frontend
 echo Starting frontend dev server...
 start "DevSync Frontend [DO NOT CLOSE]" cmd /c "cd frontend && npm run dev"
 
@@ -40,14 +40,17 @@ timeout /t 2 /nobreak >nul
 
 echo.
 echo ========================================
-echo DevSync is running!
+echo DevSync is running (Safe Mode)
 echo ========================================
 echo Backend:  http://localhost:8787
-echo AI Agent: http://localhost:9001
 echo Frontend: http://localhost:3000
 echo.
-echo Three windows have opened (Backend, AI Agent, and Frontend).
-echo To stop servers: Close all windows or type "end" here.
+echo AI Agent: DISABLED (requires system reboot)
+echo File Explorer: WORKING
+echo Code Execution: WORKING
+echo.
+echo Two windows have opened (Backend and Frontend).
+echo To stop servers: Close both windows or type "end" here.
 echo ========================================
 echo.
 
