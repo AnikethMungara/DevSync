@@ -18,7 +18,7 @@ export async function getFileSystem(): Promise<FsNode> {
 
 export async function getFileContent(path: string): Promise<FileContent> {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/files?path=${encodeURIComponent(path)}`)
+    const response = await fetch(`${BACKEND_URL}/api/files/?path=${encodeURIComponent(path)}`)
     if (!response.ok) {
       throw new Error(`Failed to fetch file content: ${response.statusText}`)
     }
@@ -53,7 +53,7 @@ export async function getFileContent(path: string): Promise<FileContent> {
  */
 export async function createFile(path: string, content: string = "", isDirectory: boolean = false): Promise<boolean> {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/files`, {
+    const response = await fetch(`${BACKEND_URL}/api/files/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -82,7 +82,7 @@ export async function createFile(path: string, content: string = "", isDirectory
  */
 export async function updateFile(path: string, content: string): Promise<boolean> {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/files`, {
+    const response = await fetch(`${BACKEND_URL}/api/files/`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -110,7 +110,7 @@ export async function updateFile(path: string, content: string): Promise<boolean
  */
 export async function deleteFile(path: string): Promise<boolean> {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/files?path=${encodeURIComponent(path)}`, {
+    const response = await fetch(`${BACKEND_URL}/api/files/?path=${encodeURIComponent(path)}`, {
       method: "DELETE",
     })
 

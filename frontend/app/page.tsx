@@ -7,6 +7,9 @@ import { EditorTabs } from "@/components/layout/editor-tabs"
 import { EditorPane } from "@/components/layout/editor-pane"
 import { Topbar } from "@/components/layout/topbar"
 import { AgentSidebar } from "@/components/layout/agent-sidebar"
+import { GitSidebar } from "@/components/layout/git-sidebar"
+import { SearchSidebar } from "@/components/layout/search-sidebar"
+import { SettingsPanel } from "@/components/layout/settings-panel"
 import { BottomPanel } from "@/components/layout/bottom-panel"
 import { CommandPalette } from "@/components/layout/command-palette"
 import { ResizablePanel } from "@/components/shared/resizable-panel"
@@ -85,10 +88,18 @@ export default function WorkspacePage() {
       {/* Activity Bar */}
       <ActivityBar activeView={activeView} onViewChange={setActiveView} />
 
-      {/* Left Panel - File Explorer */}
+      {/* Left Panel - File Explorer, Git, Search, or Settings */}
       {explorerVisible && (
         <ResizablePanel side="left" defaultWidth={explorerWidth} onResize={setExplorerWidth}>
-          <ProjectExplorer onFileSelect={handleFileSelect} />
+          {activeView === "source-control" ? (
+            <GitSidebar />
+          ) : activeView === "search" ? (
+            <SearchSidebar />
+          ) : activeView === "settings" ? (
+            <SettingsPanel />
+          ) : (
+            <ProjectExplorer onFileSelect={handleFileSelect} />
+          )}
         </ResizablePanel>
       )}
 
