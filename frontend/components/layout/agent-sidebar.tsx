@@ -1,12 +1,12 @@
 "use client"
 
-import { useRef, useEffect } from "react"
-import { MessageSquare, Code, RefreshCw, TestTube, GitCommit, Settings, Trash2 } from "lucide-react"
+import { useRef, useEffect, useState } from "react"
+import { MessageSquare, Code, RefreshCw, TestTube, GitCommit, Settings, Trash2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAgent } from "@/features/agent/use-agent"
 import { Message } from "@/features/agent/message"
 import { PromptInput } from "@/features/agent/prompt-input"
-import { sendAgentMessage } from "@/lib/api/agent"
+import { createAgentSession, sendAgentMessage, connectAgentStream } from "@/lib/api/agent"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export function AgentSidebar() {
@@ -21,13 +21,50 @@ export function AgentSidebar() {
     toggleContextSource,
     clearMessages,
   } = useAgent()
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [wsConnection, setWsConnection] = useState<WebSocket | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [currentResponse, setCurrentResponse] = useState<string>("")
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+  }, [messages, currentResponse])
+
+  // Create session on mount
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        const newSessionId = await createAgentSession({
+          model: "gpt-4o-mini",
+          allow_tools: ["fs", "exec", "http", "search"],
+        })
+        setSessionId(newSessionId)
+        setError(null)
+        console.log("AI session created:", newSessionId)
+      } catch (error) {
+        console.error("Failed to create AI session:", error)
+        setError("Failed to connect to AI service. Please check if the backend and AI agent service are running.")
+      }
+    }
+
+    initSession()
+
+    return () => {
+      // Cleanup WebSocket on unmount
+      if (wsConnection) {
+        wsConnection.close()
+      }
+    }
+  }, [])
 
   const handleSendMessage = async (content: string) => {
+    if (!sessionId) {
+      setError("No active AI session. Please refresh the page.")
+      return
+    }
+
     // Add user message
     const userMessage = {
       id: `msg-${Date.now()}`,
@@ -37,18 +74,135 @@ export function AgentSidebar() {
     }
     addMessage(userMessage)
 
-    // Get AI response
+    // Clear previous error
+    setError(null)
     setStreaming(true)
+    setCurrentResponse("")
+
     try {
-      const response = await sendAgentMessage(content, {
-        mode: activeMode,
-        sources: contextSources,
-      })
-      addMessage(response)
+      // Use WebSocket for streaming
+      const ws = connectAgentStream(sessionId)
+      setWsConnection(ws)
+
+      const assistantMsgId = `msg-${Date.now() + 1}`
+
+      ws.onopen = () => {
+        console.log("WebSocket connected, sending message...")
+        // Send message via WebSocket
+        ws.send(
+          JSON.stringify({
+            text: content,
+            context: {
+              mode: activeMode,
+              sources: contextSources,
+            },
+          })
+        )
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          console.log("Received WebSocket message:", data.type)
+
+          if (data.type === "content") {
+            // Streaming content
+            setCurrentResponse((prev) => {
+              const newContent = prev + data.content
+              // Update message in place
+              addMessage({
+                id: assistantMsgId,
+                role: "assistant" as const,
+                content: newContent,
+                createdAt: new Date().toISOString(),
+              })
+              return newContent
+            })
+          } else if (data.type === "tool_call") {
+            // Tool execution
+            const toolInfo = `\n\n🔧 **Executing tool:** ${data.tool_name}\n`
+            setCurrentResponse((prev) => {
+              const newContent = prev + toolInfo
+              addMessage({
+                id: assistantMsgId,
+                role: "assistant" as const,
+                content: newContent,
+                createdAt: new Date().toISOString(),
+              })
+              return newContent
+            })
+          } else if (data.type === "tool_result") {
+            // Tool result
+            const toolResult = `✓ Tool completed successfully\n\n`
+            setCurrentResponse((prev) => {
+              const newContent = prev + toolResult
+              addMessage({
+                id: assistantMsgId,
+                role: "assistant" as const,
+                content: newContent,
+                createdAt: new Date().toISOString(),
+              })
+              return newContent
+            })
+          } else if (data.type === "done") {
+            // Response complete
+            console.log("Streaming complete")
+            setStreaming(false)
+            setCurrentResponse("")
+            ws.close()
+          } else if (data.type === "error") {
+            // Error occurred
+            setError(data.message || "An error occurred during processing")
+            setStreaming(false)
+            setCurrentResponse("")
+            ws.close()
+          }
+        } catch (error) {
+          console.error("Failed to parse WebSocket message:", error)
+          setError("Failed to parse response from AI")
+        }
+      }
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error)
+        setError("Connection error. The AI service may not be running.")
+        setStreaming(false)
+        setCurrentResponse("")
+      }
+
+      ws.onclose = () => {
+        console.log("WebSocket closed")
+        setStreaming(false)
+        setWsConnection(null)
+        setCurrentResponse("")
+      }
     } catch (error) {
-      console.error("Failed to get AI response:", error)
-    } finally {
+      console.error("Failed to connect to AI:", error)
+      setError("Failed to connect to AI service. Please ensure the agent service is running on port 9001.")
       setStreaming(false)
+      setCurrentResponse("")
+
+      // Fallback to non-streaming API
+      try {
+        console.log("Attempting fallback to non-streaming API...")
+        const response = await sendAgentMessage(sessionId, content)
+        const assistantMessage = {
+          id: `msg-${Date.now() + 1}`,
+          role: "assistant" as const,
+          content: response.content || "I received your message but couldn't generate a response.",
+          createdAt: new Date().toISOString(),
+        }
+        addMessage(assistantMessage)
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError)
+        const errorMessage = {
+          id: `msg-${Date.now() + 1}`,
+          role: "assistant" as const,
+          content: "❌ Sorry, I'm unable to respond right now. Please make sure:\n1. The backend server is running (port 8787)\n2. The AI agent service is running (port 9001)\n3. Your OpenAI API key is configured in backend/.env",
+          createdAt: new Date().toISOString(),
+        }
+        addMessage(errorMessage)
+      }
     }
   }
 
@@ -67,15 +221,24 @@ export function AgentSidebar() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wide">AI Assistant</h2>
           <div className="flex items-center gap-1">
+            {sessionId && (
+              <span className="text-xs text-green-500 mr-2">● Connected</span>
+            )}
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6 text-text-secondary hover:text-text-primary"
               onClick={clearMessages}
+              title="Clear conversation"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-text-secondary hover:text-text-primary">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-text-secondary hover:text-text-primary"
+              title="Settings"
+            >
               <Settings className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -100,6 +263,14 @@ export function AgentSidebar() {
           </TabsList>
         </Tabs>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/30 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-red-400">{error}</p>
+        </div>
+      )}
 
       {/* Context Sources */}
       <div className="px-4 py-2 border-b border-panel-border flex gap-2 flex-wrap">
@@ -145,13 +316,22 @@ export function AgentSidebar() {
               Ask me to explain code, refactor functions, write tests, or generate commit messages.
             </p>
             <div className="flex flex-col gap-2 w-full">
-              <button className="text-left px-3 py-2 bg-panel hover:bg-panel-border border border-panel-border rounded text-xs text-text-primary transition-colors">
+              <button
+                className="text-left px-3 py-2 bg-panel hover:bg-panel-border border border-panel-border rounded text-xs text-text-primary transition-colors"
+                onClick={() => handleSendMessage("Explain this function")}
+              >
                 Explain this function
               </button>
-              <button className="text-left px-3 py-2 bg-panel hover:bg-panel-border border border-panel-border rounded text-xs text-text-primary transition-colors">
+              <button
+                className="text-left px-3 py-2 bg-panel hover:bg-panel-border border border-panel-border rounded text-xs text-text-primary transition-colors"
+                onClick={() => handleSendMessage("Refactor to async/await")}
+              >
                 Refactor to async/await
               </button>
-              <button className="text-left px-3 py-2 bg-panel hover:bg-panel-border border border-panel-border rounded text-xs text-text-primary transition-colors">
+              <button
+                className="text-left px-3 py-2 bg-panel hover:bg-panel-border border border-panel-border rounded text-xs text-text-primary transition-colors"
+                onClick={() => handleSendMessage("Write unit tests")}
+              >
                 Write unit tests
               </button>
             </div>
@@ -162,7 +342,7 @@ export function AgentSidebar() {
               <Message key={message.id} message={message} />
             ))}
             {isStreaming && (
-              <div className="flex items-center gap-2 text-text-muted text-sm">
+              <div className="flex items-center gap-2 text-text-muted text-sm mt-4">
                 <div className="flex gap-1">
                   <span
                     className="w-2 h-2 bg-accent-blue rounded-full animate-bounce"
@@ -186,7 +366,7 @@ export function AgentSidebar() {
       </div>
 
       {/* Input */}
-      <PromptInput onSend={handleSendMessage} disabled={isStreaming} />
+      <PromptInput onSend={handleSendMessage} disabled={isStreaming || !sessionId} />
     </div>
   )
 }

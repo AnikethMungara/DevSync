@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ProblemsPanel } from "@/features/problems/problems-panel"
 import { ConsolePanel } from "@/features/console/console-panel"
 import { ExecutionPanel } from "@/features/execution/execution-panel"
+import { TerminalPanel } from "@/components/layout/terminal-panel"
 import { useUIStore } from "@/lib/state/ui-store"
 
 interface BottomPanelProps {
@@ -103,6 +104,14 @@ export function BottomPanel({ onNavigate }: BottomPanelProps) {
           >
             Git
           </button>
+          <button
+            onClick={() => setActiveBottomTab("terminal")}
+            className={`text-sm transition-colors ${
+              activeBottomTab === "terminal" ? "text-text-primary" : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            Terminal
+          </button>
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -134,6 +143,7 @@ export function BottomPanel({ onNavigate }: BottomPanelProps) {
             <p className="text-text-secondary text-sm">Git panel coming soon...</p>
           </div>
         )}
+        {activeBottomTab === "terminal" && <TerminalPanel />}
       </div>
     </div>
   )
