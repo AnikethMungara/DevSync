@@ -14,13 +14,33 @@ dist/
 .next/
 out/
 
-# Misc
-.DS_Store
-*.pem
+# Environment variables and API keys
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+backend/.env
+frontend/.env.local
+agent-service/.env
+
+# But allow example files
+!*.env.example
+!.env.example
+!backend/.env.example
+!frontend/.env.local.example
+
+# API Keys and Secrets
+**/api-keys.txt
+**/secrets.json
+**/credentials.json
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Misc
+.DS_Store
 
 # Debug
 npm-debug.log*
@@ -40,6 +60,14 @@ lerna-debug.log*
 *.sqlite
 *.sqlite3
 database.db
+backend/database.db
+backend/*.db
+
+# Session and collaboration data
+**/sessions.json
+**/collaboration-sessions.json
+user-sessions/
+active-sessions/
 
 # Logs
 logs/
@@ -63,10 +91,32 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Virtual environments (very important!)
 venv/
 .venv/
 ENV/
 env/
+backend/venv/
+backend/.venv/
+agent-service/venv/
+agent-service/.venv/
+**/venv/
+**/.venv/
+
+# Python package distributions
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+wheels/
+pip-wheel-metadata/
 
 # Old/unnecessary files
 CRUD_IMPLEMENTATION.md

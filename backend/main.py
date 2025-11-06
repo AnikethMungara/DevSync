@@ -63,9 +63,23 @@ app = FastAPI(
 )
 
 # CORS middleware
+# Allow both localhost and network IP for development
+cors_origins = [
+    settings.FRONTEND_URL,
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+# In development, also allow all origins from local network
+# This enables access from other devices on the same network
+if settings.HOST == "0.0.0.0":
+    # Allow any origin in development mode (when bound to 0.0.0.0)
+    # For production, configure specific allowed origins
+    cors_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
