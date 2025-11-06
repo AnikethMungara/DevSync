@@ -213,13 +213,69 @@ async def terminal_websocket(websocket: WebSocket, session_id: str):
                     })
                     continue
 
+                elif command in ["ls", "dir"]:
+                    # List directory contents
+                    try:
+                        import os
+                        items = os.listdir(session["cwd"])
+                        output = "\n".join(sorted(items)) + "\n" if items else "(empty directory)\n"
+                        await websocket.send_json({
+                            "type": "output",
+                            "stdout": output,
+                            "stderr": "",
+                            "exit_code": 0
+                        })
+                    except Exception as e:
+                        await websocket.send_json({
+                            "type": "error",
+                            "message": f"Failed to list directory: {str(e)}"
+                        })
+                    continue
+
+                elif command == "help":
+                    # Show available commands
+                    help_text = """Available commands:
+  cd <dir>   - Change directory
+  pwd        - Print working directory
+  ls/dir     - List directory contents
+  clear      - Clear terminal
+  help       - Show this help message
+  exit       - Close terminal session
+
+You can also run any system command (e.g., python, npm, git, etc.)
+"""
+                    await websocket.send_json({
+                        "type": "output",
+                        "stdout": help_text,
+                        "stderr": "",
+                        "exit_code": 0
+                    })
+                    continue
+
+                elif command in ["exit", "quit"]:
+                    # Close session
+                    await websocket.send_json({
+                        "type": "output",
+                        "stdout": "Closing terminal session...\n",
+                        "stderr": "",
+                        "exit_code": 0
+                    })
+                    await websocket.close()
+                    break
+
                 # Execute command
                 try:
+                    # Set up environment variables
+                    import os
+                    env = os.environ.copy()
+                    env["PWD"] = session["cwd"]
+
                     process = await asyncio.create_subprocess_shell(
                         command,
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
-                        cwd=session["cwd"]
+                        cwd=session["cwd"],
+                        env=env
                     )
 
                     # Stream output

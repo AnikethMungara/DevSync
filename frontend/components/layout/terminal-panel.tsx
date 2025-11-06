@@ -26,6 +26,7 @@ export function TerminalPanel() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [command, setCommand] = useState("")
   const [historyIndex, setHistoryIndex] = useState(-1)
+  const [commandHistory, setCommandHistory] = useState<string[]>([])
 
   const terminalRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -159,6 +160,9 @@ export function TerminalPanel() {
   const executeCommand = () => {
     if (!command.trim() || !activeSession?.ws) return
 
+    // Add to command history
+    setCommandHistory((prev) => [...prev, command.trim()])
+
     // Add command to history
     addOutput(activeSession.id, "command", `$ ${command}`)
 
@@ -179,10 +183,36 @@ export function TerminalPanel() {
       executeCommand()
     } else if (e.key === "ArrowUp") {
       e.preventDefault()
-      // Navigate command history (TODO: implement)
+      // Navigate backward through command history
+      if (commandHistory.length > 0) {
+        const newIndex = historyIndex === -1 ? commandHistory.length - 1 : Math.max(0, historyIndex - 1)
+        setHistoryIndex(newIndex)
+        setCommand(commandHistory[newIndex])
+      }
     } else if (e.key === "ArrowDown") {
       e.preventDefault()
-      // Navigate command history (TODO: implement)
+      // Navigate forward through command history
+      if (historyIndex >= 0) {
+        const newIndex = historyIndex + 1
+        if (newIndex >= commandHistory.length) {
+          setHistoryIndex(-1)
+          setCommand("")
+        } else {
+          setHistoryIndex(newIndex)
+          setCommand(commandHistory[newIndex])
+        }
+      }
+    } else if (e.key === "c" && e.ctrlKey) {
+      // Ctrl+C - Cancel current command
+      e.preventDefault()
+      setCommand("")
+      setHistoryIndex(-1)
+    } else if (e.key === "l" && e.ctrlKey) {
+      // Ctrl+L - Clear terminal
+      e.preventDefault()
+      if (activeSession) {
+        clearSession(activeSession.id)
+      }
     }
   }
 
@@ -192,6 +222,13 @@ export function TerminalPanel() {
       createSession()
     }
   }, [])
+
+  // Auto-focus input when active session changes
+  useEffect(() => {
+    if (activeSessionId && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [activeSessionId])
 
   return (
     <div className="h-full flex flex-col bg-[#1e1e1e]">
@@ -254,6 +291,7 @@ export function TerminalPanel() {
           {/* Command Input */}
           <div className="border-t border-[#3e3e42] p-2 bg-[#1e1e1e]">
             <div className="flex items-center gap-2">
+              <span className="text-blue-400 font-mono text-xs">{activeSession.cwd}</span>
               <span className="text-green-400 font-mono text-sm">$</span>
               <Input
                 ref={inputRef}
