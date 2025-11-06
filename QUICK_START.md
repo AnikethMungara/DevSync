@@ -66,18 +66,44 @@ taskkill /F /IM python.exe /IM node.exe
 START.bat
 ```
 
+## Key Features
+
+### 💻 Integrated Terminal
+- Click **Terminal** tab in bottom panel
+- Run commands directly in the IDE
+- Multiple terminal sessions with tabs
+- Command history (↑/↓ arrows)
+- Shortcuts: Ctrl+L (clear), Ctrl+C (cancel)
+- **See [TERMINAL_GUIDE.md](TERMINAL_GUIDE.md) for full guide**
+
+### 🤖 AI Assistant
+- Click AI icon in right sidebar
+- Chat, explain code, refactor, write tests
+- Real-time streaming responses
+- Modes: Chat, Explain, Refactor, Test, Commit
+
+### 📁 File Explorer
+- Browse and edit files (left sidebar)
+- Full CRUD operations
+- Syntax highlighting
+- Real-time problem detection
+
 ## Documentation
 
-- `AI_AGENT_SETUP.md` - AI agent architecture
-- `VIRTUAL_ENV_SETUP.md` - Virtual environment details
-- `README.md` - Full project documentation
+- [TERMINAL_GUIDE.md](TERMINAL_GUIDE.md) - Terminal features and usage
+- [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md) - AI agent architecture
+- [AI_AGENT_TROUBLESHOOTING.md](AI_AGENT_TROUBLESHOOTING.md) - Fix AI issues
+- [VIRTUAL_ENV_SETUP.md](VIRTUAL_ENV_SETUP.md) - Virtual environment details
+- [NETWORK_ACCESS.md](NETWORK_ACCESS.md) - Access from other devices
+- [SECURITY.md](SECURITY.md) - Security best practices
+- [README.md](README.md) - Full project documentation
 
 ## What's Running
 
 Three separate processes:
-1. **Backend** (`backend/venv`) - Main IDE API
-2. **AI Agent** (`agent-service/venv`) - AI brain
-3. **Frontend** (Node) - React UI
+1. **Backend** (`backend/venv`) - Main IDE API on port 8787
+2. **AI Agent** (`agent-service/venv`) - AI brain on port 9001
+3. **Frontend** (Node) - React UI on port 3000
 
 Each with isolated dependencies - no conflicts!
 
