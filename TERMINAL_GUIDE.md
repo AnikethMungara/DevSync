@@ -2,6 +2,32 @@
 
 The DevSync IDE includes a fully functional integrated terminal that allows you to run commands directly within the IDE.
 
+---
+
+## Quick Reference
+
+### Keyboard Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| **Enter** | Execute command |
+| **↑** | Previous command |
+| **↓** | Next command |
+| **Ctrl+C** | Cancel input |
+| **Ctrl+L** | Clear screen |
+
+### Built-in Commands
+| Command | Description |
+|---------|-------------|
+| `cd <dir>` | Change directory |
+| `cd ..` | Go up one level |
+| `pwd` | Show current directory |
+| `ls` / `dir` | List files |
+| `clear` | Clear screen |
+| `help` | Show help |
+| `exit` / `quit` | Close terminal |
+
+---
+
 ## Features
 
 ### Multiple Terminal Tabs

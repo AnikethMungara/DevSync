@@ -2,9 +2,37 @@
 
 This guide explains how to access your DevSync IDE from other devices on your network (phones, tablets, other computers).
 
-## Quick Start
+## ⚡ Easiest Method: Automated Setup Script
 
-### Step 1: Find Your Computer's IP Address
+1. **Run the setup script** (as Administrator for firewall rules):
+   ```bash
+   setup-network-access.bat
+   ```
+
+2. **The script automatically**:
+   - Detects your IP address
+   - Updates backend configuration
+   - Updates frontend configuration
+   - Adds Windows Firewall rules
+   - Shows you the URLs to access DevSync
+
+3. **Restart DevSync**:
+   ```bash
+   START.bat
+   ```
+
+4. **Access from other devices**:
+   - Connect to same Wi-Fi network
+   - Open browser to: `http://YOUR_IP:3000`
+   - (The script shows you the exact URL)
+
+---
+
+## 📋 Manual Setup (Step-by-Step)
+
+If you prefer manual configuration or need to troubleshoot:
+
+### Manual Step 1: Find Your Computer's IP Address
 
 **Windows:**
 ```bash
@@ -20,7 +48,7 @@ ip addr show
 ```
 Look for `inet` address (usually `192.168.x.x` or `10.0.x.x`)
 
-### Step 2: Update Backend Configuration
+### Manual Step 2: Update Backend Configuration
 
 Edit `backend/.env` and change the `FRONTEND_URL`:
 
@@ -34,7 +62,7 @@ FRONTEND_URL=http://192.168.1.100:3000
 
 **Important**: Replace `192.168.1.100` with YOUR actual IP address from Step 1.
 
-### Step 3: Update Frontend Configuration
+### Manual Step 3: Update Frontend Configuration
 
 Edit `frontend/package.json` to allow network access:
 
@@ -55,7 +83,7 @@ NEXT_PUBLIC_BACKEND_URL=http://192.168.1.100:8787
 
 Replace `192.168.1.100` with YOUR computer's IP address.
 
-### Step 4: Update CORS Settings
+### Manual Step 4: Update CORS Settings
 
 The backend is already configured to accept connections from any origin when `FRONTEND_URL` is set correctly. The current CORS configuration in `backend/main.py` allows:
 
@@ -65,7 +93,7 @@ allow_origins=[settings.FRONTEND_URL]
 
 For development, you may want to allow all origins temporarily. I'll create a script to help with this.
 
-### Step 5: Restart Servers
+### Manual Step 5: Restart Servers
 
 Stop and restart both backend and frontend:
 
@@ -76,7 +104,7 @@ Stop and restart both backend and frontend:
 START.bat
 ```
 
-### Step 6: Access from Other Devices
+### Manual Step 6: Access from Other Devices
 
 On your other device (phone, tablet, another computer):
 

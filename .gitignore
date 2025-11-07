@@ -63,6 +63,10 @@ database.db
 backend/database.db
 backend/*.db
 
+# Checkpoints (version control snapshots)
+.checkpoints/
+**/workspace/.checkpoints/
+
 # Session and collaboration data
 **/sessions.json
 **/collaboration-sessions.json
