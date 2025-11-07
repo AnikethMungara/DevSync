@@ -8,6 +8,7 @@ import { ConsolePanel } from "@/features/console/console-panel"
 import { ExecutionPanel } from "@/features/execution/execution-panel"
 import { TerminalPanel } from "@/components/layout/terminal-panel"
 import { CheckpointsPanel } from "@/components/layout/checkpoints-panel"
+import { SettingsPanel } from "@/components/settings/settings-panel"
 import { useUIStore } from "@/lib/state/ui-store"
 
 interface BottomPanelProps {
@@ -121,6 +122,14 @@ export function BottomPanel({ onNavigate }: BottomPanelProps) {
           >
             Checkpoints
           </button>
+          <button
+            onClick={() => setActiveBottomTab("settings")}
+            className={`text-sm transition-colors ${
+              activeBottomTab === "settings" ? "text-text-primary" : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            Settings
+          </button>
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -154,6 +163,7 @@ export function BottomPanel({ onNavigate }: BottomPanelProps) {
         )}
         {activeBottomTab === "terminal" && <TerminalPanel />}
         {activeBottomTab === "checkpoints" && <CheckpointsPanel />}
+        {activeBottomTab === "settings" && <SettingsPanel />}
       </div>
     </div>
   )

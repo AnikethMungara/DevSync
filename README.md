@@ -51,6 +51,13 @@ See [QUICK_START.md](QUICK_START.md) for detailed setup instructions.
 - Automatic cleanup (keeps last 3 checkpoints)
 - Smart exclusions (skips node_modules, venv, etc.)
 
+### ⚙️ Settings & Customization
+- Theme switcher (dark, light, high-contrast)
+- Font size and family customization
+- Editor preferences (tab size, word wrap, minimap)
+- Keyboard shortcuts reference
+- Persistent settings across sessions
+
 ## 🛠️ Tech Stack
 
 ### Backend
@@ -81,6 +88,7 @@ See [QUICK_START.md](QUICK_START.md) for detailed setup instructions.
 | **[QUICK_START.md](QUICK_START.md)** | ⚡ Get started in 1 minute |
 | [TERMINAL_GUIDE.md](TERMINAL_GUIDE.md) | Terminal features and keyboard shortcuts |
 | [CHECKPOINTS_GUIDE.md](CHECKPOINTS_GUIDE.md) | Project snapshots and version control |
+| [SETTINGS_GUIDE.md](SETTINGS_GUIDE.md) | Customize IDE appearance and behavior |
 | [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md) | Configure AI assistant with OpenAI |
 | [AI_AGENT_TROUBLESHOOTING.md](AI_AGENT_TROUBLESHOOTING.md) | Fix AI-related issues |
 | [COLLABORATION.md](COLLABORATION.md) | Real-time multi-user collaboration |
