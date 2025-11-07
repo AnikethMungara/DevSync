@@ -90,13 +90,17 @@ START.bat
 
 ## Documentation
 
-- [TERMINAL_GUIDE.md](TERMINAL_GUIDE.md) - Terminal features and usage
-- [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md) - AI agent architecture
-- [AI_AGENT_TROUBLESHOOTING.md](AI_AGENT_TROUBLESHOOTING.md) - Fix AI issues
-- [VIRTUAL_ENV_SETUP.md](VIRTUAL_ENV_SETUP.md) - Virtual environment details
-- [NETWORK_ACCESS.md](NETWORK_ACCESS.md) - Access from other devices
-- [SECURITY.md](SECURITY.md) - Security best practices
-- [README.md](README.md) - Full project documentation
+| Guide | Description |
+|-------|-------------|
+| [README.md](README.md) | Project overview and tech stack |
+| [QUICK_START.md](QUICK_START.md) | **You are here** - Quick start guide |
+| [TERMINAL_GUIDE.md](TERMINAL_GUIDE.md) | Integrated terminal features |
+| [AI_AGENT_SETUP.md](AI_AGENT_SETUP.md) | AI agent configuration |
+| [AI_AGENT_TROUBLESHOOTING.md](AI_AGENT_TROUBLESHOOTING.md) | AI troubleshooting |
+| [COLLABORATION.md](COLLABORATION.md) | Real-time collaboration features |
+| [NETWORK_ACCESS.md](NETWORK_ACCESS.md) | Access from other devices |
+| [SECURITY.md](SECURITY.md) | Security best practices |
+| [VIRTUAL_ENV_SETUP.md](VIRTUAL_ENV_SETUP.md) | Virtual environment details |
 
 ## What's Running
 
