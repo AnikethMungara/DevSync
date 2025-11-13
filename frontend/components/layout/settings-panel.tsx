@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -14,81 +14,70 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Settings, Palette, Code, Terminal, Keyboard, Save } from "lucide-react"
+import { Settings, Palette, Code, Terminal, Keyboard, Save, RotateCcw, Search } from "lucide-react"
+import { useSettingsStore } from "@/lib/state/settings-store"
+import { ShortcutRecorder } from "@/components/settings/shortcut-recorder"
+import { detectShortcutConflicts, formatShortcutForDisplay } from "@/hooks/use-keyboard-shortcuts"
 
-interface SettingsState {
-  // Editor Settings
-  fontSize: number
-  tabSize: number
-  lineNumbers: boolean
-  wordWrap: boolean
-  minimap: boolean
-  autoSave: boolean
-  formatOnSave: boolean
-
-  // Theme Settings
-  theme: "light" | "dark" | "auto"
-  colorTheme: string
-
-  // Terminal Settings
-  terminalFontSize: number
-  terminalCursorStyle: "block" | "line" | "underline"
-
-  // Keybindings
-  keymap: "default" | "vim" | "emacs"
-}
-
-const DEFAULT_SETTINGS: SettingsState = {
-  fontSize: 14,
-  tabSize: 2,
-  lineNumbers: true,
-  wordWrap: false,
-  minimap: true,
-  autoSave: false,
-  formatOnSave: true,
-  theme: "dark",
-  colorTheme: "monokai",
-  terminalFontSize: 13,
-  terminalCursorStyle: "block",
-  keymap: "default",
+const SHORTCUT_LABELS: Record<string, string> = {
+  saveFile: "Save File",
+  openFile: "Open File",
+  closeFile: "Close File",
+  newFile: "New File",
+  commandPalette: "Command Palette",
+  toggleTerminal: "Toggle Terminal",
+  toggleSidebar: "Toggle Sidebar",
+  findInFiles: "Find in Files",
+  quickOpen: "Quick Open",
+  formatDocument: "Format Document",
+  runFile: "Run File",
+  toggleBottomPanel: "Toggle Bottom Panel",
+  nextTab: "Next Tab",
+  previousTab: "Previous Tab",
+  closeTab: "Close Tab",
+  duplicateLine: "Duplicate Line",
+  deleteLine: "Delete Line",
+  moveLineUp: "Move Line Up",
+  moveLineDown: "Move Line Down",
+  toggleComment: "Toggle Comment",
 }
 
 export function SettingsPanel() {
-  const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS)
-  const [hasChanges, setHasChanges] = useState(false)
+  const {
+    theme,
+    setTheme,
+    fontSize,
+    setFontSize,
+    fontFamily,
+    setFontFamily,
+    editorSettings,
+    updateEditorSetting,
+    resetEditorSettings,
+    keyboardShortcuts,
+    updateKeyboardShortcut,
+    resetKeyboardShortcuts,
+    resetAllSettings,
+  } = useSettingsStore()
 
-  useEffect(() => {
-    // Load settings from localStorage
-    const savedSettings = localStorage.getItem("devsync-settings")
-    if (savedSettings) {
-      try {
-        setSettings(JSON.parse(savedSettings))
-      } catch (e) {
-        console.error("Failed to load settings:", e)
-      }
-    }
-  }, [])
+  const [searchQuery, setSearchQuery] = useState("")
 
-  const updateSetting = <K extends keyof SettingsState>(
-    key: K,
-    value: SettingsState[K]
-  ) => {
-    setSettings((prev) => ({ ...prev, [key]: value }))
-    setHasChanges(true)
+  const conflicts = detectShortcutConflicts(keyboardShortcuts)
+
+  const getConflictsForAction = (action: string): string[] => {
+    return conflicts
+      .filter(([a, b]) => a === action || b === action)
+      .map(([a, b]) => (a === action ? b : a))
   }
 
-  const saveSettings = () => {
-    localStorage.setItem("devsync-settings", JSON.stringify(settings))
-    setHasChanges(false)
-
-    // Dispatch event for other components to react
-    window.dispatchEvent(new CustomEvent("settings-updated", { detail: settings }))
-  }
-
-  const resetToDefaults = () => {
-    setSettings(DEFAULT_SETTINGS)
-    setHasChanges(true)
-  }
+  // Filter shortcuts based on search
+  const filteredShortcuts = Object.entries(SHORTCUT_LABELS).filter(
+    ([key, label]) =>
+      label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      key.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      keyboardShortcuts[key as keyof typeof keyboardShortcuts]
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase())
+  )
 
   return (
     <div className="flex h-full flex-col bg-background">
@@ -100,12 +89,9 @@ export function SettingsPanel() {
             <h2 className="font-semibold">Settings</h2>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={resetToDefaults}>
-              Reset
-            </Button>
-            <Button size="sm" onClick={saveSettings} disabled={!hasChanges}>
-              <Save className="h-3 w-3 mr-1" />
-              Save
+            <Button size="sm" variant="outline" onClick={resetAllSettings}>
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Reset All
             </Button>
           </div>
         </div>
@@ -123,23 +109,37 @@ export function SettingsPanel() {
             <div className="space-y-4 ml-6">
               <div className="grid gap-2">
                 <Label htmlFor="fontSize">Font Size</Label>
+                <Select
+                  value={fontSize}
+                  onValueChange={(value: any) => setFontSize(value)}
+                >
+                  <SelectTrigger id="fontSize">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="small">Small (12px)</SelectItem>
+                    <SelectItem value="medium">Medium (14px)</SelectItem>
+                    <SelectItem value="large">Large (16px)</SelectItem>
+                    <SelectItem value="x-large">X-Large (18px)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="fontFamily">Font Family</Label>
                 <Input
-                  id="fontSize"
-                  type="number"
-                  min={8}
-                  max={32}
-                  value={settings.fontSize}
-                  onChange={(e) =>
-                    updateSetting("fontSize", parseInt(e.target.value) || 14)
-                  }
+                  id="fontFamily"
+                  value={fontFamily}
+                  onChange={(e) => setFontFamily(e.target.value)}
+                  placeholder="JetBrains Mono, Consolas, Monaco"
                 />
               </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="tabSize">Tab Size</Label>
                 <Select
-                  value={settings.tabSize.toString()}
-                  onValueChange={(value) => updateSetting("tabSize", parseInt(value))}
+                  value={editorSettings.tabSize.toString()}
+                  onValueChange={(value) => updateEditorSetting("tabSize", parseInt(value))}
                 >
                   <SelectTrigger id="tabSize">
                     <SelectValue />
@@ -156,8 +156,8 @@ export function SettingsPanel() {
                 <Label htmlFor="lineNumbers">Line Numbers</Label>
                 <Switch
                   id="lineNumbers"
-                  checked={settings.lineNumbers}
-                  onCheckedChange={(checked) => updateSetting("lineNumbers", checked)}
+                  checked={editorSettings.lineNumbers}
+                  onCheckedChange={(checked) => updateEditorSetting("lineNumbers", checked)}
                 />
               </div>
 
@@ -165,8 +165,10 @@ export function SettingsPanel() {
                 <Label htmlFor="wordWrap">Word Wrap</Label>
                 <Switch
                   id="wordWrap"
-                  checked={settings.wordWrap}
-                  onCheckedChange={(checked) => updateSetting("wordWrap", checked)}
+                  checked={editorSettings.wordWrap === "on"}
+                  onCheckedChange={(checked) =>
+                    updateEditorSetting("wordWrap", checked ? "on" : "off")
+                  }
                 />
               </div>
 
@@ -174,8 +176,8 @@ export function SettingsPanel() {
                 <Label htmlFor="minimap">Minimap</Label>
                 <Switch
                   id="minimap"
-                  checked={settings.minimap}
-                  onCheckedChange={(checked) => updateSetting("minimap", checked)}
+                  checked={editorSettings.minimap}
+                  onCheckedChange={(checked) => updateEditorSetting("minimap", checked)}
                 />
               </div>
 
@@ -183,8 +185,8 @@ export function SettingsPanel() {
                 <Label htmlFor="autoSave">Auto Save</Label>
                 <Switch
                   id="autoSave"
-                  checked={settings.autoSave}
-                  onCheckedChange={(checked) => updateSetting("autoSave", checked)}
+                  checked={editorSettings.autoSave}
+                  onCheckedChange={(checked) => updateEditorSetting("autoSave", checked)}
                 />
               </div>
 
@@ -192,10 +194,37 @@ export function SettingsPanel() {
                 <Label htmlFor="formatOnSave">Format on Save</Label>
                 <Switch
                   id="formatOnSave"
-                  checked={settings.formatOnSave}
-                  onCheckedChange={(checked) => updateSetting("formatOnSave", checked)}
+                  checked={editorSettings.formatOnSave}
+                  onCheckedChange={(checked) => updateEditorSetting("formatOnSave", checked)}
                 />
               </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="bracketPairColorization">Bracket Pair Colorization</Label>
+                <Switch
+                  id="bracketPairColorization"
+                  checked={editorSettings.bracketPairColorization}
+                  onCheckedChange={(checked) =>
+                    updateEditorSetting("bracketPairColorization", checked)
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="stickyScroll">Sticky Scroll</Label>
+                <Switch
+                  id="stickyScroll"
+                  checked={editorSettings.stickyScroll}
+                  onCheckedChange={(checked) => updateEditorSetting("stickyScroll", checked)}
+                />
+              </div>
+            </div>
+
+            <div className="ml-6 pt-2">
+              <Button size="sm" variant="outline" onClick={resetEditorSettings}>
+                <RotateCcw className="h-3 w-3 mr-1" />
+                Reset Editor Settings
+              </Button>
             </div>
           </div>
 
@@ -211,37 +240,14 @@ export function SettingsPanel() {
             <div className="space-y-4 ml-6">
               <div className="grid gap-2">
                 <Label htmlFor="theme">Theme</Label>
-                <Select
-                  value={settings.theme}
-                  onValueChange={(value: any) => updateSetting("theme", value)}
-                >
+                <Select value={theme} onValueChange={(value: any) => setTheme(value)}>
                   <SelectTrigger id="theme">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="light">Light</SelectItem>
                     <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="auto">Auto (System)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="colorTheme">Color Theme</Label>
-                <Select
-                  value={settings.colorTheme}
-                  onValueChange={(value) => updateSetting("colorTheme", value)}
-                >
-                  <SelectTrigger id="colorTheme">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monokai">Monokai</SelectItem>
-                    <SelectItem value="github">GitHub</SelectItem>
-                    <SelectItem value="dracula">Dracula</SelectItem>
-                    <SelectItem value="solarized-light">Solarized Light</SelectItem>
-                    <SelectItem value="solarized-dark">Solarized Dark</SelectItem>
-                    <SelectItem value="nord">Nord</SelectItem>
+                    <SelectItem value="high-contrast">High Contrast</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -250,72 +256,65 @@ export function SettingsPanel() {
 
           <Separator />
 
-          {/* Terminal Settings */}
+          {/* Keyboard Shortcuts */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Terminal className="h-4 w-4" />
-              <h3 className="text-lg font-semibold">Terminal</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Keyboard className="h-4 w-4" />
+                <h3 className="text-lg font-semibold">Keyboard Shortcuts</h3>
+              </div>
+              <Button size="sm" variant="outline" onClick={resetKeyboardShortcuts}>
+                <RotateCcw className="h-3 w-3 mr-1" />
+                Reset Shortcuts
+              </Button>
             </div>
 
-            <div className="space-y-4 ml-6">
-              <div className="grid gap-2">
-                <Label htmlFor="terminalFontSize">Terminal Font Size</Label>
+            <div className="ml-6 space-y-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="terminalFontSize"
-                  type="number"
-                  min={8}
-                  max={24}
-                  value={settings.terminalFontSize}
-                  onChange={(e) =>
-                    updateSetting("terminalFontSize", parseInt(e.target.value) || 13)
-                  }
+                  placeholder="Search shortcuts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
                 />
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="terminalCursor">Cursor Style</Label>
-                <Select
-                  value={settings.terminalCursorStyle}
-                  onValueChange={(value: any) => updateSetting("terminalCursorStyle", value)}
-                >
-                  <SelectTrigger id="terminalCursor">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="block">Block</SelectItem>
-                    <SelectItem value="line">Line</SelectItem>
-                    <SelectItem value="underline">Underline</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
+              {/* Shortcuts List */}
+              <div className="space-y-3">
+                {filteredShortcuts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No shortcuts found</p>
+                ) : (
+                  filteredShortcuts.map(([key, label]) => {
+                    const actionKey = key as keyof typeof keyboardShortcuts
+                    const conflictsWith = getConflictsForAction(key)
 
-          <Separator />
-
-          {/* Keybindings */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Keyboard className="h-4 w-4" />
-              <h3 className="text-lg font-semibold">Keybindings</h3>
-            </div>
-
-            <div className="space-y-4 ml-6">
-              <div className="grid gap-2">
-                <Label htmlFor="keymap">Keymap</Label>
-                <Select
-                  value={settings.keymap}
-                  onValueChange={(value: any) => updateSetting("keymap", value)}
-                >
-                  <SelectTrigger id="keymap">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">Default</SelectItem>
-                    <SelectItem value="vim">Vim</SelectItem>
-                    <SelectItem value="emacs">Emacs</SelectItem>
-                  </SelectContent>
-                </Select>
+                    return (
+                      <div key={key} className="space-y-1">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <Label htmlFor={`shortcut-${key}`} className="text-sm">
+                              {label}
+                            </Label>
+                            {conflictsWith.length > 0 && (
+                              <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-0.5">
+                                Conflicts with: {conflictsWith.map((c) => SHORTCUT_LABELS[c]).join(", ")}
+                              </p>
+                            )}
+                          </div>
+                          <div className="w-64">
+                            <ShortcutRecorder
+                              value={keyboardShortcuts[actionKey]}
+                              onValueChange={(value) => updateKeyboardShortcut(actionKey, value)}
+                              conflictsWith={conflictsWith}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
               </div>
             </div>
           </div>

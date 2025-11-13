@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { ActivityBar } from "@/components/layout/activity-bar"
 import { ProjectExplorer } from "@/components/layout/project-explorer"
 import { EditorTabs } from "@/components/layout/editor-tabs"
@@ -18,6 +18,7 @@ import { useUIStore } from "@/lib/state/ui-store"
 import { useEditors } from "@/features/editor/use-editors"
 import { getFileContent } from "@/lib/api/files"
 import { useCodeExecution } from "@/hooks/use-code-execution"
+import { useKeyboardShortcuts, type ShortcutHandler } from "@/hooks/use-keyboard-shortcuts"
 
 export default function WorkspacePage() {
   const [activeView, setActiveView] = useState("explorer")
@@ -34,27 +35,68 @@ export default function WorkspacePage() {
   const { tabs, activeTabId, addTab, removeTab, setActiveTab, updateTabContent, saveActiveTab } = useEditors()
   const { runActiveFile, isExecuting } = useCodeExecution()
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault()
-        setCommandPaletteOpen(true)
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-        e.preventDefault()
-        saveActiveTab()
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-        e.preventDefault()
+  // Define keyboard shortcut handlers
+  const shortcutHandlers: ShortcutHandler[] = [
+    {
+      action: "saveFile",
+      handler: () => saveActiveTab(),
+      description: "Save the current file",
+    },
+    {
+      action: "commandPalette",
+      handler: () => setCommandPaletteOpen(true),
+      description: "Open command palette",
+    },
+    {
+      action: "runFile",
+      handler: () => {
         if (!isExecuting) {
           runActiveFile()
         }
-      }
-    }
+      },
+      description: "Run the current file",
+    },
+    {
+      action: "toggleSidebar",
+      handler: () => {
+        const { explorerVisible, setExplorerVisible } = useUIStore.getState()
+        setExplorerVisible(!explorerVisible)
+      },
+      description: "Toggle sidebar visibility",
+    },
+    {
+      action: "closeTab",
+      handler: () => {
+        if (activeTabId) {
+          removeTab(activeTabId)
+        }
+      },
+      description: "Close current tab",
+    },
+    {
+      action: "nextTab",
+      handler: () => {
+        const currentIndex = tabs.findIndex((t) => t.id === activeTabId)
+        if (currentIndex < tabs.length - 1) {
+          setActiveTab(tabs[currentIndex + 1].id)
+        }
+      },
+      description: "Switch to next tab",
+    },
+    {
+      action: "previousTab",
+      handler: () => {
+        const currentIndex = tabs.findIndex((t) => t.id === activeTabId)
+        if (currentIndex > 0) {
+          setActiveTab(tabs[currentIndex - 1].id)
+        }
+      },
+      description: "Switch to previous tab",
+    },
+  ]
 
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [saveActiveTab, runActiveFile, isExecuting])
+  // Register keyboard shortcuts
+  useKeyboardShortcuts(shortcutHandlers)
 
   const handleFileSelect = async (path: string) => {
     const content = await getFileContent(path)
