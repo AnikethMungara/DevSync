@@ -26,10 +26,14 @@ export default function WorkspacePage() {
   const {
     explorerVisible,
     agentSidebarVisible,
+    bottomPanelVisible,
     explorerWidth,
     agentSidebarWidth,
     setExplorerWidth,
     setAgentSidebarWidth,
+    toggleExplorer,
+    toggleAgentSidebar,
+    toggleBottomPanel,
   } = useUIStore()
 
   const { tabs, activeTabId, addTab, removeTab, setActiveTab, updateTabContent, saveActiveTab } = useEditors()
@@ -43,9 +47,48 @@ export default function WorkspacePage() {
       description: "Save the current file",
     },
     {
+      action: "newFile",
+      handler: () => {
+        addTab({
+          id: `tab-${Date.now()}`,
+          path: "",
+          name: "Untitled",
+          isDirty: true,
+          content: "",
+          language: "plaintext",
+        })
+      },
+      description: "Create a new file",
+    },
+    {
+      action: "openFile",
+      handler: () => {
+        // Toggle to explorer view to allow file selection
+        if (!explorerVisible) {
+          toggleExplorer()
+        }
+        setActiveView("explorer")
+      },
+      description: "Open file explorer",
+    },
+    {
+      action: "closeFile",
+      handler: () => {
+        if (activeTabId) {
+          removeTab(activeTabId)
+        }
+      },
+      description: "Close current file",
+    },
+    {
       action: "commandPalette",
       handler: () => setCommandPaletteOpen(true),
       description: "Open command palette",
+    },
+    {
+      action: "quickOpen",
+      handler: () => setCommandPaletteOpen(true),
+      description: "Quick open files",
     },
     {
       action: "runFile",
@@ -58,11 +101,35 @@ export default function WorkspacePage() {
     },
     {
       action: "toggleSidebar",
-      handler: () => {
-        const { explorerVisible, setExplorerVisible } = useUIStore.getState()
-        setExplorerVisible(!explorerVisible)
-      },
+      handler: () => toggleExplorer(),
       description: "Toggle sidebar visibility",
+    },
+    {
+      action: "toggleBottomPanel",
+      handler: () => toggleBottomPanel(),
+      description: "Toggle bottom panel visibility",
+    },
+    {
+      action: "toggleTerminal",
+      handler: () => {
+        // Toggle bottom panel and set active tab to console (terminal)
+        const { bottomPanelVisible, setActiveBottomTab } = useUIStore.getState()
+        if (!bottomPanelVisible) {
+          toggleBottomPanel()
+        }
+        setActiveBottomTab("console")
+      },
+      description: "Toggle terminal",
+    },
+    {
+      action: "findInFiles",
+      handler: () => {
+        if (!explorerVisible) {
+          toggleExplorer()
+        }
+        setActiveView("search")
+      },
+      description: "Find in files",
     },
     {
       action: "closeTab",
