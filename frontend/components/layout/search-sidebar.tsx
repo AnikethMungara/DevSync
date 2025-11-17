@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import {
   Search,
@@ -15,56 +14,70 @@ import {
   ChevronRight,
   ChevronDown,
   FileText,
+  Filter,
 } from "lucide-react"
+import { searchFiles, replaceInFiles, type SearchResult, type SearchMatch } from "@/lib/api/search"
+import { useToast } from "@/hooks/use-toast"
 
-interface SearchResult {
-  path: string
-  matches: SearchMatch[]
+interface SearchSidebarProps {
+  onNavigate?: (path: string, line: number) => void
 }
 
-interface SearchMatch {
-  line: number
-  column: number
-  text: string
-  matchStart: number
-  matchEnd: number
-}
-
-export function SearchSidebar() {
+export function SearchSidebar({ onNavigate }: SearchSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [replaceQuery, setReplaceQuery] = useState("")
+  const [filePattern, setFilePattern] = useState("")
   const [showReplace, setShowReplace] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
   const [caseSensitive, setCaseSensitive] = useState(false)
   const [wholeWord, setWholeWord] = useState(false)
   const [useRegex, setUseRegex] = useState(false)
   const [results, setResults] = useState<SearchResult[]>([])
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
+  const [totalMatches, setTotalMatches] = useState(0)
+  const [filesSearched, setFilesSearched] = useState(0)
+  const { toast } = useToast()
 
   const performSearch = async () => {
     if (!searchQuery.trim()) {
       setResults([])
+      setTotalMatches(0)
+      setFilesSearched(0)
       return
     }
 
     setLoading(true)
     try {
-      const params = new URLSearchParams({
+      const data = await searchFiles({
         query: searchQuery,
-        caseSensitive: caseSensitive.toString(),
-        wholeWord: wholeWord.toString(),
-        regex: useRegex.toString(),
+        caseSensitive,
+        wholeWord,
+        regex: useRegex,
+        filePattern: filePattern || undefined,
       })
 
-      const response = await fetch(`http://localhost:8787/api/search?${params}`)
-      if (response.ok) {
-        const data = await response.json()
-        setResults(data.results || [])
-        // Expand all files by default when search results arrive
-        setExpandedFiles(new Set(data.results?.map((r: SearchResult) => r.path) || []))
+      setResults(data.results || [])
+      setTotalMatches(data.totalMatches)
+      setFilesSearched(data.filesSearched)
+
+      // Expand all files by default when search results arrive
+      setExpandedFiles(new Set(data.results?.map((r) => r.path) || []))
+
+      // Show success toast
+      if (data.results.length > 0) {
+        toast({
+          title: "Search Complete",
+          description: `Found ${data.totalMatches} matches in ${data.results.length} files`,
+        })
       }
     } catch (error) {
       console.error("Search failed:", error)
+      toast({
+        title: "Search Failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -75,27 +88,40 @@ export function SearchSidebar() {
 
     setLoading(true)
     try {
-      const response = await fetch("http://localhost:8787/api/search/replace", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          searchQuery,
-          replaceQuery,
-          caseSensitive,
-          wholeWord,
-          regex: useRegex,
-          filePath, // If provided, replace only in this file
-        }),
+      const result = await replaceInFiles({
+        searchQuery,
+        replaceQuery,
+        caseSensitive,
+        wholeWord,
+        regex: useRegex,
+        filePath,
       })
 
-      if (response.ok) {
-        // Refresh search results after replace
-        await performSearch()
-      }
+      // Show success toast
+      toast({
+        title: "Replace Complete",
+        description: `Replaced ${result.totalReplacements} matches in ${result.filesModified} files`,
+      })
+
+      // Refresh search results after replace
+      await performSearch()
     } catch (error) {
       console.error("Replace failed:", error)
+      toast({
+        title: "Replace Failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleNavigateToMatch = (path: string, line: number) => {
+    if (onNavigate) {
+      onNavigate(path, line)
+    } else {
+      console.log(`Navigate to ${path}:${line}`)
     }
   }
 
@@ -108,8 +134,6 @@ export function SearchSidebar() {
     }
     setExpandedFiles(newExpanded)
   }
-
-  const totalMatches = results.reduce((sum, r) => sum + r.matches.length, 0)
 
   return (
     <div className="flex h-full flex-col bg-background">
@@ -139,6 +163,15 @@ export function SearchSidebar() {
               placeholder="Replace..."
               value={replaceQuery}
               onChange={(e) => setReplaceQuery(e.target.value)}
+            />
+          )}
+
+          {/* File Pattern Filter */}
+          {showFilters && (
+            <Input
+              placeholder="Files to include (e.g., *.ts, *.tsx)"
+              value={filePattern}
+              onChange={(e) => setFilePattern(e.target.value)}
             />
           )}
 
@@ -173,7 +206,16 @@ export function SearchSidebar() {
             </Button>
             <div className="flex-1" />
             <Button
-              variant="ghost"
+              variant={showFilters ? "secondary" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setShowFilters(!showFilters)}
+              title="Toggle Filters"
+            >
+              <Filter className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant={showReplace ? "secondary" : "ghost"}
               size="icon"
               className="h-7 w-7"
               onClick={() => setShowReplace(!showReplace)}
@@ -210,11 +252,12 @@ export function SearchSidebar() {
         <div className="p-4 space-y-2">
           {/* Results Summary */}
           {results.length > 0 && (
-            <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+            <div className="flex flex-col gap-1 text-xs text-muted-foreground mb-4">
               <span>
-                {totalMatches} {totalMatches === 1 ? "result" : "results"} in {results.length}{" "}
+                {totalMatches} {totalMatches === 1 ? "match" : "matches"} in {results.length}{" "}
                 {results.length === 1 ? "file" : "files"}
               </span>
+              <span>({filesSearched} files searched)</span>
             </div>
           )}
 
@@ -249,17 +292,17 @@ export function SearchSidebar() {
                     {result.matches.map((match, idx) => (
                       <div
                         key={idx}
-                        className="rounded-md px-2 py-1 text-xs hover:bg-accent cursor-pointer font-mono"
-                        onClick={() => {
-                          // Navigate to file and line
-                          console.log(`Navigate to ${result.path}:${match.line}`)
-                        }}
+                        className="rounded-md px-2 py-1 text-xs hover:bg-accent cursor-pointer font-mono group"
+                        onClick={() => handleNavigateToMatch(result.path, match.line)}
+                        title={`Click to go to ${result.path}:${match.line}`}
                       >
                         <div className="flex items-start gap-2">
-                          <span className="text-muted-foreground shrink-0 w-8">{match.line}</span>
+                          <span className="text-muted-foreground shrink-0 w-8 group-hover:text-primary">
+                            {match.line}
+                          </span>
                           <span className="break-all">
                             {match.text.substring(0, match.matchStart)}
-                            <span className="bg-yellow-500/30 text-yellow-900 dark:text-yellow-100">
+                            <span className="bg-yellow-500/30 text-yellow-900 dark:text-yellow-100 font-semibold">
                               {match.text.substring(match.matchStart, match.matchEnd)}
                             </span>
                             {match.text.substring(match.matchEnd)}

@@ -204,7 +204,7 @@ export default function WorkspacePage() {
           {activeView === "source-control" ? (
             <GitSidebar />
           ) : activeView === "search" ? (
-            <SearchSidebar />
+            <SearchSidebar onNavigate={handleNavigateToFile} />
           ) : activeView === "collaboration" ? (
             <CollaborationSidebar />
           ) : activeView === "settings" ? (
