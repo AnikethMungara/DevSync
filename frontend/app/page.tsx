@@ -13,6 +13,7 @@ import { SettingsPanel } from "@/components/layout/settings-panel"
 import { CollaborationSidebar } from "@/components/layout/collaboration-sidebar"
 import { BottomPanel } from "@/components/layout/bottom-panel"
 import { CommandPalette } from "@/components/layout/command-palette"
+import { FileDialog } from "@/components/layout/file-dialog"
 import { ResizablePanel } from "@/components/shared/resizable-panel"
 import { useUIStore } from "@/lib/state/ui-store"
 import { useEditors } from "@/features/editor/use-editors"
@@ -259,6 +260,22 @@ export default function WorkspacePage() {
 
       {/* Command Palette */}
       <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} onFileSelect={handleFileSelect} />
+
+      {/* File Dialog */}
+      <FileDialog
+        onFileSelect={handleFileSelect}
+        onNewFile={(path, name) => {
+          const fullPath = path ? `${path}/${name}` : name
+          addTab({
+            id: `tab-${Date.now()}`,
+            path: fullPath,
+            name,
+            isDirty: true,
+            content: "",
+            language: "plaintext",
+          })
+        }}
+      />
     </div>
   )
 }
