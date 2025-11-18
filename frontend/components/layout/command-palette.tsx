@@ -3,15 +3,19 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { Search, File, CommandIcon, Zap, Settings, GitBranch } from "lucide-react"
+import { Search, File, CommandIcon, Zap, Settings, GitBranch, Terminal, FolderOpen, Save, Play, PanelBottom, PanelLeft } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { sortByFuzzyScore } from "@/lib/utils/fuzzy"
+import { useUIStore } from "@/lib/state/ui-store"
+import { useSettingsStore } from "@/lib/state/settings-store"
+import { formatShortcutForDisplay } from "@/hooks/use-keyboard-shortcuts"
 
 interface CommandItem {
   id: string
   label: string
   description?: string
+  shortcut?: string
   category: "file" | "command" | "agent" | "recent"
   icon?: React.ReactNode
   action: () => void
@@ -26,26 +30,102 @@ interface CommandPaletteProps {
 export function CommandPalette({ open, onOpenChange, onFileSelect }: CommandPaletteProps) {
   const [query, setQuery] = useState("")
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [recentFiles, setRecentFiles] = useState<string[]>([])
+  const [projectFiles, setProjectFiles] = useState<Array<{ name: string; path: string }>>([])
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Mock commands and files
+  const { toggleExplorer, toggleBottomPanel, setActiveBottomTab, setFileDialogOpen, setFileDialogMode } = useUIStore()
+  const { keyboardShortcuts } = useSettingsStore()
+
+  // Fetch project files when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchProjectFiles()
+    }
+  }, [open])
+
+  const fetchProjectFiles = async () => {
+    try {
+      const response = await fetch("http://localhost:8787/api/files/list?recursive=true&limit=50")
+      if (response.ok) {
+        const data = await response.json()
+        const files = data.files?.filter((f: any) => !f.isDirectory) || []
+        setProjectFiles(files.map((f: any) => ({ name: f.name, path: f.path })))
+      }
+    } catch (error) {
+      console.error("Failed to fetch files:", error)
+    }
+  }
+
+  // Build commands list with shortcuts
   const allCommands: CommandItem[] = [
-    // Commands
+    // File Commands
     {
       id: "cmd-new-file",
       label: "New File",
       description: "Create a new file",
+      shortcut: formatShortcutForDisplay(keyboardShortcuts.newFile),
       category: "command",
       icon: <File className="w-4 h-4" />,
-      action: () => console.log("New file"),
+      action: () => {
+        setFileDialogMode("new")
+        setFileDialogOpen(true)
+      },
     },
     {
-      id: "cmd-split",
-      label: "Split Editor",
-      description: "Split the editor vertically",
+      id: "cmd-open-file",
+      label: "Open File",
+      description: "Open a file from disk",
+      shortcut: formatShortcutForDisplay(keyboardShortcuts.openFile),
       category: "command",
-      icon: <CommandIcon className="w-4 h-4" />,
-      action: () => console.log("Split editor"),
+      icon: <FolderOpen className="w-4 h-4" />,
+      action: () => {
+        setFileDialogMode("open")
+        setFileDialogOpen(true)
+      },
+    },
+    {
+      id: "cmd-save-file",
+      label: "Save File",
+      description: "Save the current file",
+      shortcut: formatShortcutForDisplay(keyboardShortcuts.saveFile),
+      category: "command",
+      icon: <Save className="w-4 h-4" />,
+      action: () => {
+        // Will be handled by keyboard shortcut system
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "s", ctrlKey: true }))
+      },
+    },
+    // View Commands
+    {
+      id: "cmd-toggle-sidebar",
+      label: "Toggle Sidebar",
+      description: "Show or hide the sidebar",
+      shortcut: formatShortcutForDisplay(keyboardShortcuts.toggleSidebar),
+      category: "command",
+      icon: <PanelLeft className="w-4 h-4" />,
+      action: () => toggleExplorer(),
+    },
+    {
+      id: "cmd-toggle-terminal",
+      label: "Toggle Terminal",
+      description: "Show or hide the terminal",
+      shortcut: formatShortcutForDisplay(keyboardShortcuts.toggleTerminal),
+      category: "command",
+      icon: <Terminal className="w-4 h-4" />,
+      action: () => {
+        toggleBottomPanel()
+        setActiveBottomTab("terminal")
+      },
+    },
+    {
+      id: "cmd-toggle-panel",
+      label: "Toggle Bottom Panel",
+      description: "Show or hide the bottom panel",
+      shortcut: formatShortcutForDisplay(keyboardShortcuts.toggleBottomPanel),
+      category: "command",
+      icon: <PanelBottom className="w-4 h-4" />,
+      action: () => toggleBottomPanel(),
     },
     {
       id: "cmd-settings",
@@ -53,50 +133,36 @@ export function CommandPalette({ open, onOpenChange, onFileSelect }: CommandPale
       description: "Open workspace settings",
       category: "command",
       icon: <Settings className="w-4 h-4" />,
-      action: () => console.log("Open settings"),
+      action: () => {
+        toggleBottomPanel()
+        setActiveBottomTab("settings")
+      },
     },
+    // Git Commands
     {
-      id: "cmd-git",
+      id: "cmd-git-commit",
       label: "Git: Commit",
       description: "Commit staged changes",
       category: "command",
       icon: <GitBranch className="w-4 h-4" />,
-      action: () => console.log("Git commit"),
+      action: () => {
+        toggleBottomPanel()
+        setActiveBottomTab("git")
+      },
     },
-    // Files
+    // Run Commands
     {
-      id: "file-app",
-      label: "App.tsx",
-      description: "/src/components/App.tsx",
-      category: "file",
-      icon: <File className="w-4 h-4 text-accent-blue" />,
-      action: () => onFileSelect("/src/components/App.tsx"),
+      id: "cmd-run-file",
+      label: "Run File",
+      description: "Execute the current file",
+      shortcut: formatShortcutForDisplay(keyboardShortcuts.runFile),
+      category: "command",
+      icon: <Play className="w-4 h-4" />,
+      action: () => {
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", ctrlKey: true }))
+      },
     },
-    {
-      id: "file-header",
-      label: "Header.tsx",
-      description: "/src/components/Header.tsx",
-      category: "file",
-      icon: <File className="w-4 h-4 text-accent-blue" />,
-      action: () => onFileSelect("/src/components/Header.tsx"),
-    },
-    {
-      id: "file-utils",
-      label: "utils.ts",
-      description: "/src/lib/utils.ts",
-      category: "file",
-      icon: <File className="w-4 h-4 text-accent-blue" />,
-      action: () => onFileSelect("/src/lib/utils.ts"),
-    },
-    {
-      id: "file-readme",
-      label: "README.md",
-      description: "/README.md",
-      category: "file",
-      icon: <File className="w-4 h-4 text-accent-blue" />,
-      action: () => onFileSelect("/README.md"),
-    },
-    // Agent actions
+    // AI Actions
     {
       id: "agent-explain",
       label: "AI: Explain Code",
@@ -113,6 +179,23 @@ export function CommandPalette({ open, onOpenChange, onFileSelect }: CommandPale
       icon: <Zap className="w-4 h-4 text-warning" />,
       action: () => console.log("AI refactor"),
     },
+    {
+      id: "agent-fix",
+      label: "AI: Fix Issues",
+      description: "Ask AI to fix problems in code",
+      category: "agent",
+      icon: <Zap className="w-4 h-4 text-warning" />,
+      action: () => console.log("AI fix"),
+    },
+    // Dynamic file items from project
+    ...projectFiles.map((file) => ({
+      id: `file-${file.path}`,
+      label: file.name,
+      description: file.path,
+      category: "file" as const,
+      icon: <File className="w-4 h-4 text-accent-blue" />,
+      action: () => onFileSelect(file.path),
+    })),
   ]
 
   const filteredCommands = sortByFuzzyScore(allCommands, query, (item) => item.label)
@@ -226,7 +309,12 @@ export function CommandPalette({ open, onOpenChange, onFileSelect }: CommandPale
                             <div className="text-xs text-text-muted truncate">{item.description}</div>
                           )}
                         </div>
-                        {isSelected && (
+                        {item.shortcut && (
+                          <kbd className="px-2 py-1 text-xs bg-canvas border border-panel-border rounded text-text-muted flex-shrink-0">
+                            {item.shortcut}
+                          </kbd>
+                        )}
+                        {isSelected && !item.shortcut && (
                           <kbd className="px-2 py-1 text-xs bg-canvas border border-panel-border rounded text-text-muted flex-shrink-0">
                             ↵
                           </kbd>
