@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(echo:*)",
+      "Bash(.env.example)",
+      "Bash(deactivate)",
+      "Bash(find:*)",
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "Bash(npm install:*)",
+      "Bash(pip install:*)",
+      "Bash(test:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

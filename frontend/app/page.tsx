@@ -1,19 +1,26 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { ActivityBar } from "@/components/layout/activity-bar"
 import { ProjectExplorer } from "@/components/layout/project-explorer"
 import { EditorTabs } from "@/components/layout/editor-tabs"
 import { EditorPane } from "@/components/layout/editor-pane"
 import { Topbar } from "@/components/layout/topbar"
 import { AgentSidebar } from "@/components/layout/agent-sidebar"
+import { GitSidebar } from "@/components/layout/git-sidebar"
+import { SearchSidebar } from "@/components/layout/search-sidebar"
+import { SettingsPanel } from "@/components/layout/settings-panel"
+import { CollaborationSidebar } from "@/components/layout/collaboration-sidebar"
 import { BottomPanel } from "@/components/layout/bottom-panel"
 import { CommandPalette } from "@/components/layout/command-palette"
+import { FileDialog } from "@/components/layout/file-dialog"
 import { ResizablePanel } from "@/components/shared/resizable-panel"
 import { useUIStore } from "@/lib/state/ui-store"
 import { useEditors } from "@/features/editor/use-editors"
 import { getFileContent } from "@/lib/api/files"
 import { useCodeExecution } from "@/hooks/use-code-execution"
+import { useKeyboardShortcuts, type ShortcutHandler } from "@/hooks/use-keyboard-shortcuts"
+import { useCollaborationStore } from "@/lib/store/collaboration-store"
 
 export default function WorkspacePage() {
   const [activeView, setActiveView] = useState("explorer")
@@ -21,30 +28,145 @@ export default function WorkspacePage() {
   const {
     explorerVisible,
     agentSidebarVisible,
+    bottomPanelVisible,
     explorerWidth,
     agentSidebarWidth,
     setExplorerWidth,
     setAgentSidebarWidth,
+    toggleExplorer,
+    toggleAgentSidebar,
+    toggleBottomPanel,
   } = useUIStore()
 
   const { tabs, activeTabId, addTab, removeTab, setActiveTab, updateTabContent, saveActiveTab } = useEditors()
   const { runActiveFile, isExecuting } = useCodeExecution()
+  const { sessionId, userName, isEnabled: collaborationEnabled } = useCollaborationStore()
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault()
-        setCommandPaletteOpen(true)
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-        e.preventDefault()
-        saveActiveTab()
-      }
-    }
+  // Define keyboard shortcut handlers
+  const shortcutHandlers: ShortcutHandler[] = [
+    {
+      action: "saveFile",
+      handler: () => saveActiveTab(),
+      description: "Save the current file",
+    },
+    {
+      action: "newFile",
+      handler: () => {
+        addTab({
+          id: `tab-${Date.now()}`,
+          path: "",
+          name: "Untitled",
+          isDirty: true,
+          content: "",
+          language: "plaintext",
+        })
+      },
+      description: "Create a new file",
+    },
+    {
+      action: "openFile",
+      handler: () => {
+        // Toggle to explorer view to allow file selection
+        if (!explorerVisible) {
+          toggleExplorer()
+        }
+        setActiveView("explorer")
+      },
+      description: "Open file explorer",
+    },
+    {
+      action: "closeFile",
+      handler: () => {
+        if (activeTabId) {
+          removeTab(activeTabId)
+        }
+      },
+      description: "Close current file",
+    },
+    {
+      action: "commandPalette",
+      handler: () => setCommandPaletteOpen(true),
+      description: "Open command palette",
+    },
+    {
+      action: "quickOpen",
+      handler: () => setCommandPaletteOpen(true),
+      description: "Quick open files",
+    },
+    {
+      action: "runFile",
+      handler: () => {
+        if (!isExecuting) {
+          runActiveFile()
+        }
+      },
+      description: "Run the current file",
+    },
+    {
+      action: "toggleSidebar",
+      handler: () => toggleExplorer(),
+      description: "Toggle sidebar visibility",
+    },
+    {
+      action: "toggleBottomPanel",
+      handler: () => toggleBottomPanel(),
+      description: "Toggle bottom panel visibility",
+    },
+    {
+      action: "toggleTerminal",
+      handler: () => {
+        // Toggle bottom panel and set active tab to console (terminal)
+        const { bottomPanelVisible, setActiveBottomTab } = useUIStore.getState()
+        if (!bottomPanelVisible) {
+          toggleBottomPanel()
+        }
+        setActiveBottomTab("console")
+      },
+      description: "Toggle terminal",
+    },
+    {
+      action: "findInFiles",
+      handler: () => {
+        if (!explorerVisible) {
+          toggleExplorer()
+        }
+        setActiveView("search")
+      },
+      description: "Find in files",
+    },
+    {
+      action: "closeTab",
+      handler: () => {
+        if (activeTabId) {
+          removeTab(activeTabId)
+        }
+      },
+      description: "Close current tab",
+    },
+    {
+      action: "nextTab",
+      handler: () => {
+        const currentIndex = tabs.findIndex((t) => t.id === activeTabId)
+        if (currentIndex < tabs.length - 1) {
+          setActiveTab(tabs[currentIndex + 1].id)
+        }
+      },
+      description: "Switch to next tab",
+    },
+    {
+      action: "previousTab",
+      handler: () => {
+        const currentIndex = tabs.findIndex((t) => t.id === activeTabId)
+        if (currentIndex > 0) {
+          setActiveTab(tabs[currentIndex - 1].id)
+        }
+      },
+      description: "Switch to previous tab",
+    },
+  ]
 
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [saveActiveTab])
+  // Register keyboard shortcuts
+  useKeyboardShortcuts(shortcutHandlers)
 
   const handleFileSelect = async (path: string) => {
     const content = await getFileContent(path)
@@ -79,10 +201,20 @@ export default function WorkspacePage() {
       {/* Activity Bar */}
       <ActivityBar activeView={activeView} onViewChange={setActiveView} />
 
-      {/* Left Panel - File Explorer */}
+      {/* Left Panel - File Explorer, Git, Search, Collaboration, or Settings */}
       {explorerVisible && (
         <ResizablePanel side="left" defaultWidth={explorerWidth} onResize={setExplorerWidth}>
-          <ProjectExplorer onFileSelect={handleFileSelect} />
+          {activeView === "source-control" ? (
+            <GitSidebar />
+          ) : activeView === "search" ? (
+            <SearchSidebar onNavigate={handleNavigateToFile} />
+          ) : activeView === "collaboration" ? (
+            <CollaborationSidebar />
+          ) : activeView === "settings" ? (
+            <SettingsPanel />
+          ) : (
+            <ProjectExplorer onFileSelect={handleFileSelect} />
+          )}
         </ResizablePanel>
       )}
 
@@ -114,6 +246,9 @@ export default function WorkspacePage() {
                 updateTabContent(activeTabId, content)
               }
             }}
+            sessionId={sessionId}
+            userName={userName}
+            collaborationEnabled={collaborationEnabled}
           />
         </div>
 
@@ -130,6 +265,22 @@ export default function WorkspacePage() {
 
       {/* Command Palette */}
       <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} onFileSelect={handleFileSelect} />
+
+      {/* File Dialog */}
+      <FileDialog
+        onFileSelect={handleFileSelect}
+        onNewFile={(path, name) => {
+          const fullPath = path ? `${path}/${name}` : name
+          addTab({
+            id: `tab-${Date.now()}`,
+            path: fullPath,
+            name,
+            isDirty: true,
+            content: "",
+            language: "plaintext",
+          })
+        }}
+      />
     </div>
   )
 }

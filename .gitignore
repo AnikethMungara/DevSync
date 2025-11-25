@@ -1,5 +1,139 @@
-node_modules
-.venv
-__pycache__
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output
+*.log
+
+# Production
+build/
+dist/
+.next/
+out/
+
+# Environment variables and API keys
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env.local
+agent-service/.env
+
+# But allow example files
+!*.env.example
+!.env.example
+!backend/.env.example
+!frontend/.env.local.example
+
+# API Keys and Secrets
+**/api-keys.txt
+**/secrets.json
+**/credentials.json
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Misc
+.DS_Store
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database
 *.db
+*.sqlite
+*.sqlite3
+database.db
+backend/database.db
+backend/*.db
+
+# Checkpoints (version control snapshots)
+.checkpoints/
+**/workspace/.checkpoints/
+
+# Session and collaboration data
+**/sessions.json
+**/collaboration-sessions.json
+user-sessions/
+active-sessions/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+tmp_backup/
+
+# Workspace files (user generated content)
+backend/workspace/*
+!backend/workspace/.gitkeep
+!backend/workspace/demo/
+!backend/workspace/sample-project/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments (very important!)
+venv/
+.venv/
+ENV/
+env/
+backend/venv/
+backend/.venv/
+agent-service/venv/
+agent-service/.venv/
+**/venv/
+**/.venv/
+
+# Python package distributions
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+wheels/
+pip-wheel-metadata/
+
+# Documentation (keep in docs/ folder, ignore root MD files)
+/*.md
+!README.md
+docs/.DS_Store
+
+# Old/unnecessary files
+CRUD_IMPLEMENTATION.md
+FRONTEND_BACKEND_INTEGRATION.md
+CLEAN_START.bat
+kill-dev-servers.ps1
+kill-dev-servers.sh
+
+# OS files
+Thumbs.db
+.DS_Store
