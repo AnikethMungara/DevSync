@@ -1,15 +1,45 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { EditorTab } from "@/lib/types"
+import { useCollaborativeEditor } from "@/hooks/use-collaborative-editor"
+import { RemoteCursorsOverlay } from "./remote-cursors-overlay"
 
 interface EditorPaneProps {
   tab: EditorTab | null
   onContentChange?: (content: string) => void
+  sessionId?: string | null
+  userName?: string
+  collaborationEnabled?: boolean
 }
 
-export function EditorPane({ tab, onContentChange }: EditorPaneProps) {
+export function EditorPane({
+  tab,
+  onContentChange,
+  sessionId = null,
+  userName = 'Anonymous',
+  collaborationEnabled = false
+}: EditorPaneProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [localContent, setLocalContent] = useState(tab?.content || '')
+
+  const collaboration = useCollaborativeEditor({
+    sessionId,
+    userName,
+    filePath: tab?.path || null,
+    initialContent: tab?.content || '',
+    onContentChange: (newContent) => {
+      setLocalContent(newContent)
+      onContentChange?.(newContent)
+    },
+    enabled: collaborationEnabled,
+  })
+
+  useEffect(() => {
+    if (tab) {
+      setLocalContent(tab.content)
+    }
+  }, [tab?.id, tab?.content])
 
   useEffect(() => {
     if (textareaRef.current && tab) {
@@ -38,25 +68,64 @@ export function EditorPane({ tab, onContentChange }: EditorPaneProps) {
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value
-    onContentChange?.(newContent)
+    const cursorPosition = e.target.selectionStart
+
+    setLocalContent(newContent)
+
+    if (collaborationEnabled) {
+      collaboration.handleLocalContentChange(newContent, cursorPosition)
+    } else {
+      onContentChange?.(newContent)
+    }
   }
 
+  const handleCursorMove = () => {
+    if (textareaRef.current && collaborationEnabled) {
+      const cursorPosition = textareaRef.current.selectionStart
+      collaboration.handleCursorChange(cursorPosition)
+    }
+  }
+
+  const displayContent = collaborationEnabled ? collaboration.content : localContent
+
   return (
-    <div className="h-full bg-canvas overflow-hidden flex flex-col">
-      <textarea
-        ref={textareaRef}
-        value={tab.content}
-        onChange={handleContentChange}
-        className="flex-1 w-full p-4 text-sm font-mono text-text-primary bg-canvas border-none outline-none resize-none"
-        style={{
-          tabSize: 2,
-          lineHeight: "1.6",
-        }}
-        spellCheck={false}
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-      />
+    <div className="h-full bg-canvas overflow-hidden flex flex-col relative">
+      {collaborationEnabled && collaboration.isConnected && (
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-md">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+          <span className="text-xs text-green-500 font-medium">
+            {collaboration.sessionState?.user_count || 0} user{(collaboration.sessionState?.user_count || 0) !== 1 ? 's' : ''} online
+          </span>
+        </div>
+      )}
+
+      <div className="flex-1 relative">
+        <textarea
+          ref={textareaRef}
+          value={displayContent}
+          onChange={handleContentChange}
+          onSelect={handleCursorMove}
+          onClick={handleCursorMove}
+          onKeyUp={handleCursorMove}
+          className="flex-1 w-full h-full p-4 text-sm font-mono text-text-primary bg-canvas border-none outline-none resize-none"
+          style={{
+            tabSize: 2,
+            lineHeight: "1.6",
+          }}
+          spellCheck={false}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+        />
+
+        {collaborationEnabled && textareaRef.current && (
+          <RemoteCursorsOverlay
+            textareaRef={textareaRef}
+            remoteCursors={collaboration.remoteCursors}
+            content={displayContent}
+          />
+        )}
+      </div>
     </div>
   )
 }

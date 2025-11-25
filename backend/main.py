@@ -13,9 +13,11 @@ import sys
 from pathlib import Path
 
 from app.config import settings
-from app.routers import files, execution, problems, projects, agent_proxy, git, search, collaboration, terminal, checkpoints
+from app.routers import files, execution, problems, projects, agent_proxy, git, search, collaboration, terminal, checkpoints, auth, yjs_collaboration
 from app.database import Database
 from app.utils.logger import setup_logger
+from app.config.redis_config import redis_manager
+from app.middleware.rate_limit import rate_limiter
 
 # Fix for Windows asyncio subprocess issue
 if sys.platform == 'win32':
@@ -36,6 +38,11 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting DevSync backend")
 
+    # Initialize Redis
+    await redis_manager.connect()
+    app.state.redis = redis_manager
+    rate_limiter.redis_manager = redis_manager
+
     # Initialize database
     db = Database(settings.DATABASE_PATH)
     await db.initialize()
@@ -46,12 +53,23 @@ async def lifespan(app: FastAPI):
     workspace_path.mkdir(parents=True, exist_ok=True)
     logger.info(f"Workspace directory: {workspace_path.absolute()}")
 
+    # Start background task for cleanup
+    async def cleanup_task():
+        while True:
+            await asyncio.sleep(3600)  # Run every hour
+            await rate_limiter.cleanup_old_entries()
+            logger.info("Cleaned up rate limiter entries")
+
+    cleanup = asyncio.create_task(cleanup_task())
+
     yield
 
     # Shutdown
     logger.info("Shutting down DevSync backend")
+    cleanup.cancel()
     if db:
         await db.close()
+    await redis_manager.disconnect()
 
 
 # Create FastAPI app
@@ -86,6 +104,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
 app.include_router(files.router, prefix="/api/files", tags=["files"])
 app.include_router(execution.router, prefix="/api/execution", tags=["execution"])
 app.include_router(problems.router, prefix="/api/problems", tags=["problems"])
@@ -94,6 +113,7 @@ app.include_router(agent_proxy.router, prefix="/api/agent", tags=["agent"])
 app.include_router(git.router, prefix="/api/git", tags=["git"])
 app.include_router(search.router, prefix="/api/search", tags=["search"])
 app.include_router(collaboration.router, prefix="/api/collaboration", tags=["collaboration"])
+app.include_router(yjs_collaboration.router, prefix="/api/collaboration", tags=["yjs-collaboration"])
 app.include_router(terminal.router, prefix="/api/terminal", tags=["terminal"])
 app.include_router(checkpoints.router, prefix="/api/checkpoints", tags=["checkpoints"])
 

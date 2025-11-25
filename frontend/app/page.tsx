@@ -20,6 +20,7 @@ import { useEditors } from "@/features/editor/use-editors"
 import { getFileContent } from "@/lib/api/files"
 import { useCodeExecution } from "@/hooks/use-code-execution"
 import { useKeyboardShortcuts, type ShortcutHandler } from "@/hooks/use-keyboard-shortcuts"
+import { useCollaborationStore } from "@/lib/store/collaboration-store"
 
 export default function WorkspacePage() {
   const [activeView, setActiveView] = useState("explorer")
@@ -39,6 +40,7 @@ export default function WorkspacePage() {
 
   const { tabs, activeTabId, addTab, removeTab, setActiveTab, updateTabContent, saveActiveTab } = useEditors()
   const { runActiveFile, isExecuting } = useCodeExecution()
+  const { sessionId, userName, isEnabled: collaborationEnabled } = useCollaborationStore()
 
   // Define keyboard shortcut handlers
   const shortcutHandlers: ShortcutHandler[] = [
@@ -244,6 +246,9 @@ export default function WorkspacePage() {
                 updateTabContent(activeTabId, content)
               }
             }}
+            sessionId={sessionId}
+            userName={userName}
+            collaborationEnabled={collaborationEnabled}
           />
         </div>
 

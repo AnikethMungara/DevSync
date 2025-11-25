@@ -122,6 +122,11 @@ sdist/
 wheels/
 pip-wheel-metadata/
 
+# Documentation (keep in docs/ folder, ignore root MD files)
+/*.md
+!README.md
+docs/.DS_Store
+
 # Old/unnecessary files
 CRUD_IMPLEMENTATION.md
 FRONTEND_BACKEND_INTEGRATION.md

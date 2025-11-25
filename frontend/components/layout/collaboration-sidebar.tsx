@@ -22,16 +22,26 @@ import {
   CollaborationUser,
   ChatMessage,
 } from "@/hooks/use-collaboration"
+import { useCollaborationStore } from "@/lib/store/collaboration-store"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8787"
 
 export function CollaborationSidebar() {
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [userName, setUserName] = useState("")
+  const {
+    sessionId,
+    userName,
+    isEnabled,
+    setUserName,
+    createSession: createStoreSession,
+    joinSession: joinStoreSession,
+    leaveSession: leaveStoreSession,
+  } = useCollaborationStore()
+
   const [showJoinForm, setShowJoinForm] = useState(false)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [chatInput, setChatInput] = useState("")
   const [copiedLink, setCopiedLink] = useState(false)
+  const [localUserName, setLocalUserName] = useState(userName)
 
   const chatScrollRef = useRef<HTMLDivElement>(null)
 
@@ -77,17 +87,8 @@ export function CollaborationSidebar() {
   })
 
   useEffect(() => {
-    // Load saved session info from localStorage
-    const savedSessionId = localStorage.getItem("collaboration-session-id")
-    const savedUserName = localStorage.getItem("collaboration-user-name")
-
-    if (savedSessionId) {
-      setSessionId(savedSessionId)
-    }
-    if (savedUserName) {
-      setUserName(savedUserName)
-    }
-  }, [])
+    setLocalUserName(userName)
+  }, [userName])
 
   useEffect(() => {
     // Auto-scroll chat to bottom
@@ -97,25 +98,15 @@ export function CollaborationSidebar() {
   }, [chatMessages])
 
   const createNewSession = async () => {
-    if (!userName.trim()) {
+    if (!localUserName.trim()) {
       alert("Please enter your name")
       return
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/collaboration/sessions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_name: `${userName}'s Session` }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setSessionId(data.session_id)
-        localStorage.setItem("collaboration-session-id", data.session_id)
-        localStorage.setItem("collaboration-user-name", userName)
-        setShowJoinForm(false)
-      }
+      setUserName(localUserName)
+      await createStoreSession()
+      setShowJoinForm(false)
     } catch (error) {
       console.error("Failed to create session:", error)
       alert("Failed to create session")
@@ -123,20 +114,18 @@ export function CollaborationSidebar() {
   }
 
   const joinSession = (joinSessionId: string) => {
-    if (!userName.trim()) {
+    if (!localUserName.trim()) {
       alert("Please enter your name")
       return
     }
 
-    setSessionId(joinSessionId)
-    localStorage.setItem("collaboration-session-id", joinSessionId)
-    localStorage.setItem("collaboration-user-name", userName)
+    setUserName(localUserName)
+    joinStoreSession(joinSessionId)
     setShowJoinForm(false)
   }
 
   const leaveSession = () => {
-    setSessionId(null)
-    localStorage.removeItem("collaboration-session-id")
+    leaveStoreSession()
     setChatMessages([])
   }
 
@@ -195,8 +184,8 @@ export function CollaborationSidebar() {
             <div className="space-y-3">
               <Input
                 placeholder="Your name"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
+                value={localUserName}
+                onChange={(e) => setLocalUserName(e.target.value)}
               />
 
               <Button className="w-full" onClick={createNewSession}>
