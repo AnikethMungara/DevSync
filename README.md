@@ -7,15 +7,15 @@ Real-time collaborative IDE with AI assistance.
 ### Backend
 ```bash
 cd backend
-cp .env.example .env  # Set JWT_SECRET_KEY
-python main.py        # Runs on :8787
+cp .env.example .env  #  Set JWT_SECRET_KEY
+python main.py        #  Runs on :8787
 ```
 
 ### Frontend
 ```bash
 cd frontend
 npm install
-npm run dev           # Runs on :3000
+npm run dev           #  Runs on :3000
 ```
 
 ## Features
