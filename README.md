@@ -11,12 +11,14 @@ cp .env.example .env  #  Set JWT_SECRET_KEY
 python main.py        #  Runs on :8787
 ```
 
+
 ### Frontend
 ```bash
 cd frontend
 npm install
 npm run dev           #  Runs on :3000
 ```
+
 
 ## Features
 
@@ -25,6 +27,7 @@ npm run dev           #  Runs on :3000
 - AI-powered coding assistant
 - Built-in terminal and file management
 - Git integration
+
 
 ## Demo Accounts
 
